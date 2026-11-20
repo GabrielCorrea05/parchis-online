@@ -1,6 +1,8 @@
 kind: wasmer.io/App.v0
+# Tu usuario de Wasmer; cámbialo si despliegas con otra cuenta.
+owner: gabrielcorrea05
 name: parchis-online
-package: parchis-online
+package: gabrielcorrea05/parchis-online
 
 # La BD gestionada se aprovisiona sola en la región indicada. Wasmer inyecta
 # DB_HOST, DB_PORT, DB_NAME, DB_USERNAME y DB_PASSWORD.

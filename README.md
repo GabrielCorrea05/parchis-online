@@ -418,23 +418,14 @@ El repositorio incluye `wasmer.toml` y `app.yaml` preparados. Pasos:
    no es `mt1`, cambia `PUSHER_APP_CLUSTER` y `PUSHER_HOST` en `app.yaml`.
 2. Instalar el CLI: `npm i -g wasmer` o seguir `https://docs.wasmer.io/edge`.
 3. Hacer `wasmer login`.
-4. Generar `APP_KEY` y guardar secretos en Wasmer:
-
-    ```sh
-    wasmer app secrets create APP_KEY "$(php artisan key:generate --show)"
-    wasmer app secrets create PUSHER_APP_ID TU_APP_ID
-    wasmer app secrets create PUSHER_APP_KEY TU_APP_KEY
-    wasmer app secrets create PUSHER_APP_SECRET TU_APP_SECRET
-    ```
-
-5. `app.yaml` ya declara `capabilities.database.engine: postgres` en la región
+4. `app.yaml` ya declara `capabilities.database.engine: postgres` en la región
    `fr-roub1`, así que Wasmer crea la BD y inyecta `DB_HOST`, `DB_PORT`,
    `DB_NAME`, `DB_USERNAME` y `DB_PASSWORD`. El código acepta `DB_NAME` como
    fallback de `DB_DATABASE`. Ajusta `APP_URL` al dominio real que te asigne
-   Wasmer antes de desplegar. Si `parchis-online` está ocupado, cambia también
-   `name` y `package` en `app.yaml`.
-6. Añadir el dominio `*.wasmer.app` (o el tuyo) a **Allowed origins** en Pusher.
-7. Desplegar desde la raíz del repo:
+   Wasmer. Si `parchis-online` está ocupado, cambia también `name` y `package`
+   en `app.yaml` y haz commit/push antes de continuar.
+5. Añadir el dominio `*.wasmer.app` (o el tuyo) a **Allowed origins** en Pusher.
+6. Crear la app con el primer despliegue (te pedirá dueño y nombre):
 
     ```sh
     npm install
@@ -446,8 +437,23 @@ El repositorio incluye `wasmer.toml` y `app.yaml` preparados. Pasos:
    build` por Laravel. Tras cambiar frontend, vuelve a ejecutar el build antes
     de `wasmer deploy`.
 
-8. En el primer arranque, `PARCHIS_AUTO_MIGRATE=true` crea las tablas
-   automáticamente. Para limpiar salas abandonadas en el plan Pro puedes
+7. Ahora sí, guarda los secretos y redespliega. El CLI los asocia a la app
+   leyendo `app.yaml`:
+
+    ```sh
+    wasmer app secrets create APP_KEY "$(php artisan key:generate --show)"
+    wasmer app secrets create PUSHER_APP_ID TU_APP_ID
+    wasmer app secrets create PUSHER_APP_KEY TU_APP_KEY
+    wasmer app secrets create PUSHER_APP_SECRET TU_APP_SECRET
+    wasmer deploy
+    ```
+
+    El primer arranque sin secretos puede devolver 500; es normal, se resuelve
+    con este redespliegue. También puedes crear las variables desde
+    _Settings → Environment Vars_ del panel de Wasmer.
+
+8. En el primer arranque con secretos, `PARCHIS_AUTO_MIGRATE=true` crea las
+   tablas automáticamente. Para limpiar salas abandonadas en el plan Pro puedes
    descomentar el bloque `jobs` de `app.yaml`; en Hobby, las salas antiguas
    permanecen hasta que las borres desde la BD.
 

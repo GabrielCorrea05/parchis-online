@@ -360,8 +360,8 @@ VITE_BROADCAST_CONNECTION=pusher
 PUSHER_APP_ID=...
 PUSHER_APP_KEY=...
 PUSHER_APP_SECRET=...
-PUSHER_APP_CLUSTER=mt1
-PUSHER_HOST=api-mt1.pusher.com
+PUSHER_APP_CLUSTER=eu
+PUSHER_HOST=api-eu.pusher.com
 PUSHER_PORT=443
 PUSHER_SCHEME=https
 VITE_PUSHER_APP_KEY="${PUSHER_APP_KEY}"
@@ -415,9 +415,11 @@ El repositorio incluye `wasmer.toml` y `app.yaml` preparados. Pasos:
 
 1. Crear una app gratuita en **Pusher Channels** (plan **Sandbox**), no en
    Pusher Beams: Beams son notificaciones push y no sirve para los WebSockets
-   del juego. Copia `PUSHER_APP_ID`, `PUSHER_APP_KEY`, `PUSHER_APP_SECRET` y el
-   cluster. Si tu cluster no es `mt1`, cambia `PUSHER_APP_CLUSTER` y
-   `PUSHER_HOST` en `app.yaml`.
+   del juego. Desde España conviene elegir el cluster **`eu`** (Ireland), que
+   es el europeo. Copia `PUSHER_APP_ID`, `PUSHER_APP_KEY` y
+   `PUSHER_APP_SECRET`. En `app.yaml` deja `PUSHER_APP_CLUSTER: eu` y
+   `PUSHER_HOST: api-eu.pusher.com`; si creaste la app en otro cluster, cambia
+   **los dos valores** (el `host` manda, aunque el `cluster` esté declarado).
 2. Instalar el CLI en Windows (PowerShell):
 
     ```powershell

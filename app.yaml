@@ -31,8 +31,8 @@ env:
     DB_CONNECTION: pgsql
     LOG_CHANNEL: stderr
     PARCHIS_AUTO_MIGRATE: 'true'
-    PUSHER_APP_CLUSTER: mt1
-    PUSHER_HOST: api-mt1.pusher.com
+    PUSHER_APP_CLUSTER: eu
+    PUSHER_HOST: api-eu.pusher.com
     PUSHER_PORT: '443'
     PUSHER_SCHEME: https
 

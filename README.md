@@ -413,9 +413,11 @@ ejecuta manualmente (o se omite: no afecta a las partidas terminadas).
 
 El repositorio incluye `wasmer.toml` y `app.yaml` preparados. Pasos:
 
-1. Crear una app gratuita en Pusher Channels (**Sandbox**) y copiar
-   `PUSHER_APP_ID`, `PUSHER_APP_KEY`, `PUSHER_APP_SECRET` y cluster. Si tu cluster
-   no es `mt1`, cambia `PUSHER_APP_CLUSTER` y `PUSHER_HOST` en `app.yaml`.
+1. Crear una app gratuita en **Pusher Channels** (plan **Sandbox**), no en
+   Pusher Beams: Beams son notificaciones push y no sirve para los WebSockets
+   del juego. Copia `PUSHER_APP_ID`, `PUSHER_APP_KEY`, `PUSHER_APP_SECRET` y el
+   cluster. Si tu cluster no es `mt1`, cambia `PUSHER_APP_CLUSTER` y
+   `PUSHER_HOST` en `app.yaml`.
 2. Instalar el CLI en Windows (PowerShell):
 
     ```powershell

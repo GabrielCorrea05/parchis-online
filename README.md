@@ -416,7 +416,14 @@ El repositorio incluye `wasmer.toml` y `app.yaml` preparados. Pasos:
 1. Crear una app gratuita en Pusher Channels (**Sandbox**) y copiar
    `PUSHER_APP_ID`, `PUSHER_APP_KEY`, `PUSHER_APP_SECRET` y cluster. Si tu cluster
    no es `mt1`, cambia `PUSHER_APP_CLUSTER` y `PUSHER_HOST` en `app.yaml`.
-2. Instalar el CLI: `npm i -g wasmer` o seguir `https://docs.wasmer.io/edge`.
+2. Instalar el CLI en Windows (PowerShell):
+
+    ```powershell
+    iwr https://win.wasmer.io -useb | iex
+    ```
+
+    En macOS/Linux: `curl https://get.wasmer.io -sSfL | sh`.
+
 3. Hacer `wasmer login`.
 4. `app.yaml` ya declara `capabilities.database.engine: postgres` en la región
    `fr-roub1`, así que Wasmer crea la BD y inyecta `DB_HOST`, `DB_PORT`,

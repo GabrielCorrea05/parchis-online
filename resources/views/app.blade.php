@@ -11,6 +11,28 @@
 
         @fonts
 
+        @php
+            $broadcastConfig = [
+                'connection' => config('broadcasting.default'),
+                'pusher' => [
+                    'key' => config('broadcasting.connections.pusher.key'),
+                    'cluster' => config('broadcasting.connections.pusher.options.cluster'),
+                    'host' => config('broadcasting.connections.pusher.options.host'),
+                    'port' => config('broadcasting.connections.pusher.options.port'),
+                    'scheme' => config('broadcasting.connections.pusher.options.scheme'),
+                ],
+                'reverb' => [
+                    'key' => config('broadcasting.connections.reverb.key'),
+                    'host' => config('broadcasting.connections.reverb.options.host'),
+                    'port' => config('broadcasting.connections.reverb.options.port'),
+                    'scheme' => config('broadcasting.connections.reverb.options.scheme'),
+                ],
+            ];
+        @endphp
+        <script>
+            window.__PARCHIS_BROADCAST__ = @json($broadcastConfig, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        </script>
+
         @vite(['resources/css/app.css', 'resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
         <x-inertia::head>
             <title>{{ config('app.name', 'Laravel') }}</title>

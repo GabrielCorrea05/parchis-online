@@ -8,12 +8,16 @@ use App\Support\PlayerSession;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Throwable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -33,6 +37,28 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
         $this->configureHttps();
         $this->configureRateLimiting();
+        $this->ensureDatabaseSchema();
+    }
+
+    /**
+     * En Wasmer Hobby no hay cron jobs ni SSH: inicializa el esquema en el
+     * primer arranque. Solo se activa con PARCHIS_AUTO_MIGRATE=true.
+     */
+    protected function ensureDatabaseSchema(): void
+    {
+        if (! config('parchis.auto_migrate') || app()->runningInConsole()) {
+            return;
+        }
+
+        try {
+            if (! Schema::hasTable('games')) {
+                Artisan::call('migrate', ['--force' => true]);
+            }
+        } catch (Throwable $exception) {
+            Log::error('No se pudo inicializar el esquema de la base de datos.', [
+                'message' => $exception->getMessage(),
+            ]);
+        }
     }
 
     /**

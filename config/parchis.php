@@ -16,6 +16,11 @@ return [
     // Una sala en waiting sin actividad durante estas horas se considera abandonada.
     'abandoned_room_hours' => (int) env('PARCHIS_ABANDONED_ROOM_HOURS', 24),
 
+    // Wasmer Hobby no tiene cron jobs: si no existen las tablas, migrar en el
+    // primer arranque. Desactivado por defecto; Cloud/self-host siguen usando
+    // `php artisan migrate --force` en el release.
+    'auto_migrate' => (bool) env('PARCHIS_AUTO_MIGRATE', false),
+
     /*
     |--------------------------------------------------------------------------
     | Tablero parametrizado por número de brazos

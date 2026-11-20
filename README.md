@@ -371,11 +371,13 @@ VITE_PUSHER_PORT="${PUSHER_PORT}"
 ```
 
 3. Añadir el dominio a **Allowed origins** en Pusher.
-4. Redesplegar para regenerar los assets de Vite.
+4. No hace falta redesplegar solo por cambiar de Reverb a Pusher.
 
-`resources/js/lib/echo.ts` elige el conector por `VITE_BROADCAST_CONNECTION`;
-`config/broadcasting.php` usa el mismo valor por `BROADCAST_CONNECTION`. No hace
-falta tocar los componentes Vue.
+`config/broadcasting.php` decide el driver en servidor y
+`resources/views/app.blade.php` inyecta la configuración pública en
+`window.__PARCHIS_BROADCAST__`. `resources/js/lib/echo.ts` lee ese objeto y
+solamente usa `VITE_*` como fallback. No hace falta tocar los componentes Vue ni
+reconstruir los assets al cambiar de entorno.
 
 ### 7.7 Procesos permanentes y reinicio
 
@@ -389,6 +391,69 @@ En Cloud no hay que mantener processes manuales:
 En self-host, `composer run dev` solo es para desarrollo. Producción necesita
 `php artisan queue:work --tries=3`, un cron con `* * * * * php artisan schedule:run`
 y `php artisan reverb:start` detrás de HTTPS, todos con supervisor/systemd.
+
+### 7.8 Alternativa gratuita: Wasmer Edge + Pusher Sandbox
+
+Wasmer Edge puede ejecutar el HTTP de Laravel, pero **no puede alojar Reverb**:
+TCP/UDP está en alpha y los _persistent workloads_ aún están en desarrollo. La
+combinación gratuita es:
+
+```text
+Wasmer Edge (HTTP + PostgreSQL gestionada de 100 MB)
+Pusher Sandbox (WebSockets: 200.000 mensajes/día, 100 conexiones concurrentes)
+QUEUE_CONNECTION=sync  →  sin worker permanente
+PARCHIS_AUTO_MIGRATE=true  →  migra en el primer arranque (sin cron jobs)
+```
+
+Límites del plan Hobby de Wasmer: 100.000 peticiones/mes, 6 horas de cómputo,
+150 GB de ancho de banda y 100 MB de BD. Es suficiente para probar y para
+partidas ocasionales, no para un servidor con partidas 24/7. Los _cron jobs_ y
+SSH son funciones del plan Pro, así que la limpieza de salas abandonadas se
+ejecuta manualmente (o se omite: no afecta a las partidas terminadas).
+
+El repositorio incluye `wasmer.toml` y `app.yaml` preparados. Pasos:
+
+1. Crear una app gratuita en Pusher Channels (**Sandbox**) y copiar
+   `PUSHER_APP_ID`, `PUSHER_APP_KEY`, `PUSHER_APP_SECRET` y cluster. Si tu cluster
+   no es `mt1`, cambia `PUSHER_APP_CLUSTER` y `PUSHER_HOST` en `app.yaml`.
+2. Instalar el CLI: `npm i -g wasmer` o seguir `https://docs.wasmer.io/edge`.
+3. Hacer `wasmer login`.
+4. Generar `APP_KEY` y guardar secretos en Wasmer:
+
+    ```sh
+    wasmer app secrets create APP_KEY "$(php artisan key:generate --show)"
+    wasmer app secrets create PUSHER_APP_ID TU_APP_ID
+    wasmer app secrets create PUSHER_APP_KEY TU_APP_KEY
+    wasmer app secrets create PUSHER_APP_SECRET TU_APP_SECRET
+    ```
+
+5. `app.yaml` ya declara `capabilities.database.engine: postgres` en la región
+   `fr-roub1`, así que Wasmer crea la BD y inyecta `DB_HOST`, `DB_PORT`,
+   `DB_NAME`, `DB_USERNAME` y `DB_PASSWORD`. El código acepta `DB_NAME` como
+   fallback de `DB_DATABASE`. Ajusta `APP_URL` al dominio real que te asigne
+   Wasmer antes de desplegar. Si `parchis-online` está ocupado, cambia también
+   `name` y `package` en `app.yaml`.
+6. Añadir el dominio `*.wasmer.app` (o el tuyo) a **Allowed origins** en Pusher.
+7. Desplegar desde la raíz del repo:
+
+    ```sh
+    npm install
+    npm run build
+    wasmer deploy
+    ```
+
+    `public/build` se versiona en esta rama porque Wasmer no ejecuta `npm run
+   build` por Laravel. Tras cambiar frontend, vuelve a ejecutar el build antes
+    de `wasmer deploy`.
+
+8. En el primer arranque, `PARCHIS_AUTO_MIGRATE=true` crea las tablas
+   automáticamente. Para limpiar salas abandonadas en el plan Pro puedes
+   descomentar el bloque `jobs` de `app.yaml`; en Hobby, las salas antiguas
+   permanecen hasta que las borres desde la BD.
+
+La configuración pública de Pusher viaja en el HTML, así que no hay que
+reconstruir los assets cuando cambian las credenciales. El secreto de Pusher
+nunca se expone al navegador.
 
 ---
 
@@ -444,6 +509,7 @@ Marca cada punto con 2–3 pestañas o navegadores distintos:
 - Victoria antes que turno extra; desempate por fichas en meta → `progress` → `seat`.
 - Revancha por clonación de sala con nuevo `code`, copiando apodos/colores/seats/token_hash.
 - Eventos atómicos con snapshot completo; animaciones solo visuales.
+- Alternativa gratuita: Wasmer Edge + Pusher Sandbox; Reverb queda para local/Cloud.
 - Dirección visual 2: plano moderno accesible, tokens CSS, `Inter` + `Manrope`,
   SVG propio, sonido Web Audio desactivado por defecto.
 - Accesibilidad WCAG 2.2 AA: tablero `role="group"`, fichas enfocables, tabla

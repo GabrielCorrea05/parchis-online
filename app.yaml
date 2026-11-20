@@ -1,0 +1,54 @@
+kind: wasmer.io/App.v0
+name: parchis-online
+package: parchis-online
+
+# La BD gestionada se aprovisiona sola en la región indicada. Wasmer inyecta
+# DB_HOST, DB_PORT, DB_NAME, DB_USERNAME y DB_PASSWORD.
+capabilities:
+    database:
+        engine: postgres
+
+locality:
+    regions:
+        - fr-roub1
+
+# Valores públicos. APP_KEY, PUSHER_APP_ID, PUSHER_APP_KEY y
+# PUSHER_APP_SECRET se añaden como secrets (no van en este archivo):
+#   wasmer app secrets create APP_KEY "$(php artisan key:generate --show)"
+#   wasmer app secrets create PUSHER_APP_ID TU_APP_ID
+#   wasmer app secrets create PUSHER_APP_KEY TU_APP_KEY
+#   wasmer app secrets create PUSHER_APP_SECRET TU_APP_SECRET
+env:
+    APP_ENV: production
+    APP_DEBUG: 'false'
+    APP_FORCE_HTTPS: 'true'
+    APP_URL: https://parchis-online.wasmer.app
+    SESSION_DRIVER: database
+    SESSION_SECURE_COOKIE: 'true'
+    CACHE_STORE: database
+    QUEUE_CONNECTION: sync
+    BROADCAST_CONNECTION: pusher
+    DB_CONNECTION: pgsql
+    LOG_CHANNEL: stderr
+    PARCHIS_AUTO_MIGRATE: 'true'
+    PUSHER_APP_CLUSTER: mt1
+    PUSHER_HOST: api-mt1.pusher.com
+    PUSHER_PORT: '443'
+    PUSHER_SCHEME: https
+
+# El servidor PHP integrado atiende una petición cada vez.
+scaling:
+    mode: single_concurrency
+
+# Nota: los `jobs` de Wasmer (cron y pre-deployment) son una función del plan
+# Pro, no del plan Hobby gratuito. Por eso la migración la hace el arranque
+# de la app (PARCHIS_AUTO_MIGRATE) y la limpieza de salas abandonadas se
+# ejecuta manualmente. Si más adelante tienes Pro, puedes añadir:
+#
+# jobs:
+#   - name: cleanup-abandoned-rooms
+#     trigger: 1d
+#     timeout: 5m
+#     action:
+#       execute:
+#         cli_args: ["/app/artisan", "parchis:cleanup-abandoned-rooms"]

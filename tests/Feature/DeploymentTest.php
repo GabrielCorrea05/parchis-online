@@ -60,6 +60,23 @@ it('borra solo las salas en espera abandonadas con sus jugadores y eventos', fun
         ->and(Game::find($finished->id))->not->toBeNull();
 });
 
+it('inyecta la configuración pública de Pusher sin exponer el secreto', function () {
+    config()->set('broadcasting.default', 'pusher');
+    config()->set('broadcasting.connections.pusher.key', 'public-key');
+    config()->set('broadcasting.connections.pusher.secret', 'super-secreto');
+    config()->set('broadcasting.connections.pusher.options.cluster', 'mt1');
+    config()->set('broadcasting.connections.pusher.options.host', 'api-mt1.pusher.com');
+    config()->set('broadcasting.connections.pusher.options.port', 443);
+    config()->set('broadcasting.connections.pusher.options.scheme', 'https');
+
+    $this->get('/')
+        ->assertOk()
+        ->assertSee('__PARCHIS_BROADCAST__', false)
+        ->assertSee('public-key', false)
+        ->assertSee('api-mt1.pusher.com', false)
+        ->assertDontSee('super-secreto', false);
+});
+
 it('limita la creación de salas por dirección IP', function () {
     Event::fake();
 

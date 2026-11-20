@@ -11,10 +11,11 @@ Artisan::command('inspire', function () {
 
 /*
  | Laravel Cloud ejecuta `schedule:run` cada minuto cuando el scheduler está
- | activado en el panel. Borra salas en espera abandonadas; las partidas
- | terminadas se conservan para el historial público.
+ | activado en el panel. En Wasmer se ejecuta el propio comando mediante un job
+ | diario, sin `schedule:run`, para no consumir las horas de cómputo incluidas.
+ | Las partidas terminadas se conservan para el historial público.
  */
 Schedule::command(CleanupAbandonedRooms::class)
-    ->hourly()
+    ->dailyAt('03:00')
     ->withoutOverlapping(10)
     ->onOneServer();

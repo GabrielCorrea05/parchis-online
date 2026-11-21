@@ -61,7 +61,7 @@ final class RoomController extends Controller
         $host = $game->players()->firstOrFail();
         PlayerSession::remember($host, $token);
 
-        $this->announce(PlayerJoined::class, $code, $game, $host, "{$host->nickname} ha creado la sala.");
+        $this->announce(PlayerJoined::class, $code, $game, "{$host->nickname} ha creado la sala.");
 
         return to_route('rooms.show', $code);
     }
@@ -119,7 +119,7 @@ final class RoomController extends Controller
         PlayerSession::remember($player, $token);
 
         $game->refresh();
-        $this->announce(PlayerJoined::class, $game->code, $game, $player, "{$player->nickname} se ha unido a la sala.");
+        $this->announce(PlayerJoined::class, $game->code, $game, "{$player->nickname} se ha unido a la sala.");
 
         return to_route('rooms.show', $game->code);
     }
@@ -166,14 +166,14 @@ final class RoomController extends Controller
         PlayerSession::forget($game->code);
         $game->refresh();
 
-        $this->announce(PlayerLeft::class, $game->code, $game, null, "{$nickname} ha salido de la sala.");
+        $this->announce(PlayerLeft::class, $game->code, $game, "{$nickname} ha salido de la sala.");
 
         if ($wasHost) {
             $newHost = $game->players()->orderBy('seat')->first();
             $message = $newHost !== null
                 ? "{$newHost->nickname} es el nuevo host."
                 : 'No quedan jugadores en la sala.';
-            $this->announce(HostChanged::class, $game->code, $game, null, $message);
+            $this->announce(HostChanged::class, $game->code, $game, $message);
         }
 
         return to_route('home');
@@ -211,7 +211,6 @@ final class RoomController extends Controller
             GameStarted::class,
             $game->code,
             $game,
-            $player,
             "¡Partida iniciada! Tablero fijado con {$outcome['snapshot']['arms']} brazos.",
         );
 
@@ -252,11 +251,16 @@ final class RoomController extends Controller
     /**
      * La sala ya está persistida cuando se emite el evento: si Reverb no está
      * disponible, se registra el fallo pero no se rompe la acción del usuario.
+     *
+     * El payload es neutro: no se personaliza para quien ejecuta la acción.
+     * Cada pestaña re-personaliza `isYou`, `currentPlayerId` y `canStart` con
+     * su propio token, así el host no pierde el botón «Empezar partida» cuando
+     * entra otro jugador.
      */
-    private function announce(string $event, string $code, Game $game, ?Player $player, string $message): void
+    private function announce(string $event, string $code, Game $game, string $message): void
     {
         try {
-            $event::dispatch($code, $this->roomView($game, $player), $message);
+            $event::dispatch($code, $this->roomView($game, null), $message);
         } catch (\Throwable $exception) {
             report($exception);
         }

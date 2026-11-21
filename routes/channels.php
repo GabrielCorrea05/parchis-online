@@ -2,7 +2,6 @@
 
 use App\Models\Game;
 use App\Models\Player;
-use App\Support\PlayerSession;
 use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
@@ -13,23 +12,23 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
  | No hay login: la autorización del canal se resuelve con el token
  | guardado en la cookie de la sala (o la cabecera X-Player-Token).
  */
-Broadcast::channel('room.{code}', function ($user, string $code) {
-    $game = Game::where('code', strtoupper($code))->first();
-
-    if ($game === null) {
+Broadcast::channel('room.{code}', function ($user, string $code): array|false {
+    // ResolvePlayerToken ya ha resuelto este jugador desde X-Player-Token
+    // (la cabecera gana sobre la cookie compartida entre pestañas).
+    if (! $user instanceof Player) {
         return false;
     }
 
-    $player = PlayerSession::playerFor($game);
+    $game = Game::where('code', strtoupper($code))->first();
 
-    if ($player === null) {
+    if ($game === null || (int) $user->game_id !== (int) $game->id) {
         return false;
     }
 
     return [
-        'id' => $player->id,
-        'name' => $player->nickname,
-        'color' => $player->color,
+        'id' => $user->id,
+        'name' => $user->nickname,
+        'color' => $user->color,
     ];
 });
 

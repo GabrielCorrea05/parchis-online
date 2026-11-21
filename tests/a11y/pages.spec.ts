@@ -10,6 +10,8 @@ import Result from '@/pages/Games/Result.vue';
 import ResultsIndex from '@/pages/Results/Index.vue';
 import ResultsShow from '@/pages/Results/Show.vue';
 import { useAccessibility } from '@/lib/accessibility';
+import { personaliseRoom } from '@/lib/room';
+import type { Room } from '@/types';
 import { board, colors, history, result, room, snapshot } from './fixtures';
 
 const wrappers: VueWrapper[] = [];
@@ -157,5 +159,60 @@ describe('comprobaciones específicas de accesibilidad', () => {
 
     it('el tablero usa el constructor correcto para 4 brazos', () => {
         expect(board.arms).toBe(4);
+    });
+});
+
+describe('sala de espera en vivo', () => {
+    it('el host conserva «Empezar partida» con un payload de evento neutro', () => {
+        const broadcastRoom = {
+            ...room,
+            currentPlayerId: null,
+            canStart: false,
+            players: room.players.map((player) => ({
+                ...player,
+                isYou: false,
+            })),
+        } as unknown as Room;
+
+        const hostRoom = personaliseRoom(broadcastRoom, 1);
+        expect(hostRoom.canStart).toBe(true);
+        expect(hostRoom.players.find((p) => p.id === 1)?.isYou).toBe(true);
+        expect(hostRoom.players.find((p) => p.id === 2)?.isYou).toBe(false);
+
+        const guestRoom = personaliseRoom(broadcastRoom, 2);
+        expect(guestRoom.canStart).toBe(false);
+        expect(guestRoom.players.find((p) => p.id === 2)?.isYou).toBe(true);
+    });
+
+    it('el botón del host sigue visible y se deshabilita con un jugador', () => {
+        const soloHost = {
+            ...room,
+            playerCount: 1,
+            players: room.players.slice(0, 1),
+            currentPlayerId: 1,
+        } as unknown as Room;
+
+        const wrapper = render(Waiting, { room: soloHost });
+        const button = wrapper.find('button.btn-primary');
+
+        expect(button.exists()).toBe(true);
+        expect(button.attributes('disabled')).toBeDefined();
+        expect(button.text()).toContain('Faltan jugadores para empezar');
+        expect(wrapper.text()).not.toContain('Esperando a que');
+    });
+
+    it('los demás jugadores ven quién debe iniciar', () => {
+        const guestRoom = {
+            ...room,
+            currentPlayerId: 2,
+            canStart: false,
+        } as unknown as Room;
+
+        const wrapper = render(Waiting, { room: guestRoom });
+
+        expect(wrapper.text()).toContain(
+            'Esperando a que Marta inicie la partida',
+        );
+        expect(wrapper.find('button.btn-primary').exists()).toBe(false);
     });
 });

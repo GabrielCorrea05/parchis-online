@@ -93,6 +93,26 @@ it('permite unirse a una sala existente que aún no ha empezado', function () {
     Event::assertDispatched(PlayerJoined::class);
 });
 
+it('el evento al unirse no suplanta la identidad del host en la sala', function () {
+    Event::fake([PlayerJoined::class]);
+
+    $game = makeGame();
+    $host = addPlayer($game, 'Ana', 'red', newToken(), host: true);
+
+    $this->post("/rooms/{$game->code}/join", ['nickname' => 'Beto', 'color' => 'blue'])
+        ->assertRedirect("/rooms/{$game->code}");
+
+    Event::assertDispatched(PlayerJoined::class, function (PlayerJoined $event) use ($host): bool {
+        expect($event->room['players'])->toHaveCount(2)
+            ->and($event->room['hostPlayerId'])->toBe($host->id)
+            ->and($event->room['currentPlayerId'])->toBeNull()
+            ->and($event->room['canStart'])->toBeFalse()
+            ->and(array_column($event->room['players'], 'isYou'))->toBe([false, false]);
+
+        return true;
+    });
+});
+
 it('rechaza unirse cuando la sala está llena', function () {
     $game = makeGame();
     $hostToken = newToken();

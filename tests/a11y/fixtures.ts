@@ -136,6 +136,7 @@ export const room: Record<string, unknown> = {
     maxPlayers: 6,
     minPlayers: 2,
     hostPlayerId: 1,
+    currentPlayerId: 1,
     canStart: true,
     arms: 3,
     board,

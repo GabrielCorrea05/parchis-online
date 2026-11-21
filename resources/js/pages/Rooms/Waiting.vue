@@ -12,6 +12,7 @@ import {
     TOKEN_HEADER,
 } from '@/lib/playerSession';
 import { followRematch } from '@/lib/rematch';
+import { personaliseRoom } from '@/lib/room';
 import type { Room } from '@/types';
 
 const props = defineProps<{ room: Room }>();
@@ -20,7 +21,8 @@ configureGameEcho({
     [TOKEN_HEADER]: playerToken(props.room.code) ?? '',
 });
 
-const room = ref<Room>(props.room);
+const youId = ref<number | null>(props.room.currentPlayerId ?? null);
+const room = ref<Room>(personaliseRoom(props.room, youId.value));
 const notice = ref<string>('');
 const copied = ref(false);
 const starting = ref(false);
@@ -29,7 +31,7 @@ const connection = useConnectionStatus();
 watch(
     () => props.room,
     (value) => {
-        room.value = value;
+        room.value = personaliseRoom(value, youId.value);
     },
 );
 
@@ -53,7 +55,7 @@ const { leaveChannel } = useEchoPresence<RoomEventPayload>(
         notice.value = payload.message;
 
         if (payload.room) {
-            room.value = payload.room;
+            room.value = personaliseRoom(payload.room, youId.value);
         }
 
         if (payload.newCode && payload.oldCode === room.value.code) {
@@ -72,8 +74,8 @@ onBeforeUnmount(() => leaveChannel());
 const hostName = computed(
     () => room.value.players.find((player) => player.isHost)?.nickname ?? '—',
 );
-const isHost = computed(() =>
-    room.value.players.some((player) => player.isHost && player.isYou),
+const isHost = computed(
+    () => youId.value !== null && youId.value === room.value.hostPlayerId,
 );
 const isStarted = computed(() => room.value.status === 'in_progress');
 const connected = computed(() => connection.value === 'connected');
@@ -191,10 +193,10 @@ const copyCode = async () => {
                         class="mt-5 border-t border-[var(--c-line)] pt-4"
                     >
                         <button
-                            v-if="isHost && room.canStart"
+                            v-if="isHost"
                             type="button"
                             class="btn btn-primary w-full"
-                            :disabled="starting"
+                            :disabled="starting || !room.canStart"
                             @click="startGame"
                         >
                             <span
@@ -202,17 +204,16 @@ const copyCode = async () => {
                                 class="spinner"
                                 aria-hidden="true"
                             />
-                            {{ starting ? 'Iniciando…' : 'Empezar partida' }}
+                            {{
+                                starting
+                                    ? 'Iniciando…'
+                                    : room.canStart
+                                      ? 'Empezar partida'
+                                      : 'Faltan jugadores para empezar'
+                            }}
                         </button>
-                        <p
-                            v-else-if="isHost"
-                            class="text-sm text-[var(--c-muted)]"
-                        >
-                            Necesitas al menos {{ room.minPlayers }} jugadores
-                            para empezar.
-                        </p>
                         <p v-else class="text-sm text-[var(--c-muted)]">
-                            Esperando a que {{ hostName }} inicie la partida…
+                            Esperando a que {{ hostName }} inicie la partida
                         </p>
                     </div>
                 </section>

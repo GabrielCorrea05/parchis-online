@@ -433,14 +433,15 @@ El repositorio incluye `wasmer.toml` y `app.yaml` preparados. Pasos:
    `fr-roub1`, así que Wasmer crea la BD y inyecta `DB_HOST`, `DB_PORT`,
    `DB_NAME`, `DB_USERNAME` y `DB_PASSWORD`. El código acepta `DB_NAME` como
    fallback de `DB_DATABASE`. Ajusta `APP_URL` al dominio real que te asigne
-   Wasmer. Si `parchis-online` está ocupado, cambia `name` en `app.yaml` **y**
-   el sufijo de `package` en `app.yaml` y de `[package].name` en `wasmer.toml`
-   (los tres deben coincidir) y haz commit/push antes de continuar.
+   Wasmer. Si `parchis-online` está ocupado, cambia `name` en `app.yaml` y
+   `[package].name` en `wasmer.toml` con el mismo sufijo. Deja `package: .` en
+   `app.yaml`: eso le dice a Wasmer que publique el código de esta carpeta.
+   Haz commit/push antes de continuar.
 5. Añadir el dominio `*.wasmer.app` (o el tuyo) a **Allowed origins** en Pusher.
 6. Crear la app con el primer despliegue. El CLI publica primero el paquete
-   local; cuando pregunte _Publish new version of package
-   'gabrielcorrea05/parchis-online'?_, responde **yes**. También te pedirá
-   dueño y nombre la primera vez:
+   local; si pregunta _Change package to '.' in app.yaml?_ o _Publish new
+   version of package 'gabrielcorrea05/parchis-online'?_, responde **yes**.
+   También te pedirá dueño y nombre la primera vez:
 
     ```sh
     npm install

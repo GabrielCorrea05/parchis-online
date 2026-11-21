@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { useConnectionStatus, useEchoPresence } from '@laravel/echo-vue';
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import AppShell from '@/components/AppShell.vue';
 import BoardPreview from '@/components/BoardPreview.vue';
 import PlayerList from '@/components/PlayerList.vue';
@@ -26,6 +26,7 @@ const room = ref<Room>(personaliseRoom(props.room, youId.value));
 const notice = ref<string>('');
 const copied = ref(false);
 const starting = ref(false);
+const navigating = ref(false);
 const connection = useConnectionStatus();
 
 watch(
@@ -64,7 +65,7 @@ const { leaveChannel } = useEchoPresence<RoomEventPayload>(
         }
 
         if (room.value.status === 'in_progress') {
-            router.visit(`/games/${room.value.code}`);
+            openBoard();
         }
     },
 );
@@ -79,6 +80,39 @@ const isHost = computed(
 );
 const isStarted = computed(() => room.value.status === 'in_progress');
 const connected = computed(() => connection.value === 'connected');
+
+/**
+ * La navigación no depende solo del WebSocket: si Pusher no está disponible,
+ * la respuesta Inertia del host o el sondeo de los invitados también abre el
+ * tablero en cuanto la sala pasa a `in_progress`.
+ */
+function openBoard(): void {
+    if (navigating.value || !isStarted.value) {
+        return;
+    }
+    navigating.value = true;
+    router.visit(`/games/${room.value.code}`);
+}
+
+watch(isStarted, (started) => {
+    if (started) {
+        openBoard();
+    }
+});
+
+let roomPoll = 0;
+
+onMounted(() => {
+    // Refuerzo para los jugadores que no son host: si el evento de Pusher se
+    // pierde, en menos de 3 s descubren que la partida ya empezó.
+    roomPoll = window.setInterval(() => {
+        if (!isStarted.value && !navigating.value) {
+            router.reload({ only: ['room'] });
+        }
+    }, 3000);
+});
+
+onBeforeUnmount(() => window.clearInterval(roomPoll));
 
 const startGame = () => {
     starting.value = true;

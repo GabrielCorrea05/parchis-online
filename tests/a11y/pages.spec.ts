@@ -151,10 +151,21 @@ describe('comprobaciones específicas de accesibilidad', () => {
 
     it('el dado y el indicador de conexión tienen nombre accesible', () => {
         const wrapper = render(Board, { snapshot });
-        expect(wrapper.find('[role="img"]').attributes('aria-label')).toContain(
-            'Dado: 5',
-        );
+        const label = wrapper.find('[role="img"]').attributes('aria-label');
+        expect(label).toContain('Dado: 5');
+        expect(label).toContain('tirado por Marta');
         expect(wrapper.find('[role="status"]').exists()).toBe(true);
+    });
+
+    it('el botón de tirar solo aparece en el turno propio', () => {
+        const own = render(Board, { snapshot });
+        expect(own.text()).toContain('Tirar dado');
+
+        const other = render(Board, {
+            snapshot: { ...snapshot, youPlayerId: 2 },
+        });
+        expect(other.text()).not.toContain('Tirar dado');
+        expect(other.text()).toContain('Esperando el turno de');
     });
 
     it('el tablero usa el constructor clásico para 4 brazos', () => {

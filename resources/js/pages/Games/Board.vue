@@ -100,6 +100,15 @@ const canMove = computed(
         !busy.value,
 );
 const connected = computed(() => connection.value === 'connected');
+const lastRollEntry = computed(() => snapshot.value.state.dice.history.at(-1));
+const lastRollerName = computed(() =>
+    lastRollEntry.value ? playerName(lastRollEntry.value.playerId) : '',
+);
+const diceValue = computed(() =>
+    rolling.value
+        ? null
+        : (snapshot.value.pendingRoll ?? snapshot.value.state.dice.last),
+);
 const boardSummary = computed(
     () =>
         `Tablero de ${snapshot.value.board.arms} brazos. Turno de ${playerName(snapshot.value.currentPlayerId)}. ` +
@@ -153,6 +162,14 @@ function addLog(message: string): void {
 let announcementParts: string[] = [];
 let announcementVersion = -1;
 let flushTimer = 0;
+let rollTimer = 0;
+
+function showRollAnimation(): void {
+    rolling.value = true;
+    window.clearTimeout(rollTimer);
+    // La cara definitiva la envía el servidor; la animación solo la revela.
+    rollTimer = window.setTimeout(() => (rolling.value = false), 560);
+}
 
 function queueAnnouncement(versionNumber: number, message: string): void {
     if (versionNumber > announcementVersion) {
@@ -292,8 +309,7 @@ useEcho<GameEventPayload>(
 
         if ('value' in payload) {
             playRoll();
-            rolling.value = true;
-            window.setTimeout(() => (rolling.value = false), 560);
+            showRollAnimation();
             const sixes = payload.consecutiveSixes
                 ? ` (${payload.consecutiveSixes}/3 seises)`
                 : '';
@@ -367,7 +383,7 @@ async function doRoll(): Promise<void> {
 
     busy.value = true;
     error.value = '';
-    rolling.value = true;
+    showRollAnimation();
     playRoll();
 
     try {
@@ -382,7 +398,6 @@ async function doRoll(): Promise<void> {
                 ? caught.message
                 : 'No se pudo tirar el dado.';
     } finally {
-        rolling.value = false;
         busy.value = false;
     }
 }
@@ -451,6 +466,7 @@ onMounted(() => window.addEventListener('keydown', onGlobalKeydown));
 onBeforeUnmount(() => {
     window.removeEventListener('keydown', onGlobalKeydown);
     window.clearTimeout(flushTimer);
+    window.clearTimeout(rollTimer);
     announcementParts = [];
 });
 </script>
@@ -556,11 +572,10 @@ onBeforeUnmount(() => {
                         <div>
                             <p class="label mb-1">Dado</p>
                             <Dice
-                                :value="
-                                    snapshot.pendingRoll ??
-                                    snapshot.state.dice.last
-                                "
+                                :value="diceValue"
                                 :rolling="rolling"
+                                :settled="!rolling && diceValue !== null"
+                                :roller="lastRollerName"
                             />
                         </div>
                         <span class="chip">
@@ -609,9 +624,10 @@ onBeforeUnmount(() => {
 
                     <div class="mt-4 grid gap-2">
                         <button
+                            v-if="isMyTurn"
                             ref="rollButton"
                             type="button"
-                            class="btn btn-primary w-full"
+                            class="btn btn-primary btn-roll w-full"
                             :disabled="!canRoll"
                             @click="doRoll"
                         >
@@ -646,7 +662,7 @@ onBeforeUnmount(() => {
                             Esperando el turno de
                             {{ playerName(snapshot.currentPlayerId) }}…
                         </p>
-                        <p class="hint">
+                        <p v-if="isMyTurn" class="hint">
                             Atajo: pulsa <kbd class="font-bold">R</kbd> para
                             tirar. En el tablero usa Tab o flechas y luego Intro
                             o Espacio.

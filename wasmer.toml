@@ -2,6 +2,7 @@
 name = "gabrielcorrea05/parchis-online"
 version = "0.1.0"
 description = "Parchís online para 2 a 6 jugadores"
+private = false
 
 [dependencies]
 "php/php" = "=8.3.4"

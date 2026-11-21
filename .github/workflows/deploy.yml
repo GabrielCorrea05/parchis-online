@@ -1,0 +1,76 @@
+name: Tests y despliegue
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    name: Probar, compilar y desplegar
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener código
+        uses: actions/checkout@v4
+
+      - name: Preparar PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: bcmath, curl, dom, gd, intl, mbstring, pdo_sqlite, sqlite3, xml, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Instalar dependencias de PHP
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Instalar dependencias de Node
+        run: npm ci --no-audit --no-fund
+
+      - name: Preparar entorno de pruebas
+        run: |
+          cp .env.example .env
+          php artisan key:generate --ansi
+
+      - name: Tests de PHP, estilo y tipos
+        run: composer test
+
+      - name: Comprobaciones de frontend
+        run: npm run check
+
+      - name: Tipos de Vue
+        run: npm run types:check
+
+      - name: Accesibilidad
+        run: npm run test:a11y
+
+      - name: Compilar assets
+        run: npm run build
+
+      - name: Instalar Wasmer CLI
+        run: |
+          curl https://get.wasmer.io -sSfL | sh
+          echo "$HOME/.wasmer/bin" >> "$GITHUB_PATH"
+
+      - name: Publicar paquete y desplegar en Wasmer
+        env:
+          WASMER_TOKEN: ${{ secrets.WASMER_TOKEN }}
+        run: |
+          if [ -z "$WASMER_TOKEN" ]; then
+            echo "Falta el secreto WASMER_TOKEN en el repositorio." >&2
+            exit 1
+          fi
+          composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+          wasmer deploy --publish-package --bump --non-interactive

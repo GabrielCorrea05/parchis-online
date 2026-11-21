@@ -411,6 +411,16 @@ partidas ocasionales, no para un servidor con partidas 24/7. Los _cron jobs_ y
 SSH son funciones del plan Pro, así que la limpieza de salas abandonadas se
 ejecuta manualmente (o se omite: no afecta a las partidas terminadas).
 
+> **Despliegue automático:** este repositorio tiene `.github/workflows/deploy.yml`.
+> En cada `push` (y también con _Run workflow_) ejecuta `composer test`,
+> `npm run check`, `npm run types:check`, `npm run test:a11y` y `npm run build`.
+> Solo si todo pasa, instala las dependencias de producción y ejecuta
+> `wasmer deploy --publish-package --bump --non-interactive`. El token se lee del
+> secreto `WASMER_TOKEN` del repositorio; no hay que copiarlo en ningún archivo.
+> El workflow compila los assets antes de publicar y `.wasmerignore` conserva
+> `vendor/` y `public/build/` porque Wasmer los necesita en runtime, y excluye
+> `public/hot` para que no apunte al Vite local.
+
 El repositorio incluye `wasmer.toml` y `app.yaml` preparados. Pasos:
 
 1. Crear una app gratuita en **Pusher Channels** (plan **Sandbox**), no en
@@ -434,13 +444,13 @@ El repositorio incluye `wasmer.toml` y `app.yaml` preparados. Pasos:
    `DB_NAME`, `DB_USERNAME` y `DB_PASSWORD`. El código acepta `DB_NAME` como
    fallback de `DB_DATABASE`. Ajusta `APP_URL` al dominio real que te asigne
    Wasmer. Si `parchis-online` está ocupado, cambia `name` en `app.yaml` y
-   `[package].name` en `wasmer.toml` con el mismo sufijo. Deja `package: .` en
-   `app.yaml`: eso le dice a Wasmer que publique el código de esta carpeta.
+   `[package].name` en `wasmer.toml` con el mismo sufijo. Mantén `package: .` en
+   `app.yaml`: el CLI publica el paquete local con `--publish-package`.
    Haz commit/push antes de continuar.
 5. Añadir el dominio `*.wasmer.app` (o el tuyo) a **Allowed origins** en Pusher.
 6. Crear la app con el primer despliegue. El CLI publica primero el paquete
-   local; si pregunta _Change package to '.' in app.yaml?_ o _Publish new
-   version of package 'gabrielcorrea05/parchis-online'?_, responde **yes**.
+   local; si pregunta _Publish new version of package
+   'gabrielcorrea05/parchis-online'?_, responde **yes**.
    También te pedirá dueño y nombre la primera vez:
 
     ```sh
@@ -473,6 +483,11 @@ El repositorio incluye `wasmer.toml` y `app.yaml` preparados. Pasos:
    tablas automáticamente. Para limpiar salas abandonadas en el plan Pro puedes
    descomentar el bloque `jobs` de `app.yaml`; en Hobby, las salas antiguas
    permanecen hasta que las borres desde la BD.
+
+Para que el workflow pueda desplegar, añade en GitHub el secreto del repositorio
+`WASMER_TOKEN` con un token de Wasmer con permisos de publicación. No se muestra
+ni se guarda en el código: el workflow solo lo recibe como variable de entorno.
+Después de cambiarlo no hace falta tocar `app.yaml`.
 
 La configuración pública de Pusher viaja en el HTML, así que no hay que
 reconstruir los assets cuando cambian las credenciales. El secreto de Pusher

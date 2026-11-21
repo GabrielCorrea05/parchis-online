@@ -120,13 +120,10 @@ function pieceLocation(piece: GamePiece): string {
     if (piece.progress >= ringCells.value) {
         return `en la columna de casa, casilla ${piece.progress - ringCells.value + 1}`;
     }
-    const exit = snapshot.value.board.cells.find(
-        (cell) => cell.arm === piece.seat && cell.kind === 'salida',
-    );
-    const index = exit
-        ? (exit.index + piece.progress) % ringCells.value
-        : piece.progress;
-    return `en el recorrido, casilla ${index + 1}`;
+    const start = snapshot.value.board.startIndices?.[piece.seat] ?? 0;
+    const index = (start + piece.progress) % ringCells.value;
+    const label = snapshot.value.board.cells[index]?.label ?? index + 1;
+    return `en el recorrido, casilla ${label}`;
 }
 
 function pieceAccessibleLabel(piece: GamePiece): string {

@@ -14,7 +14,7 @@ final class MovementValidator
     private readonly int $goal;
 
     /**
-     * @param  array{arms: int, cellsPerArm: int, homeLength: int}  $board
+     * @param  array{arms: int, cellsPerArm: int, homeLength: int, safeCells?: list<int>, startIndices?: list<int>}  $board
      */
     public function __construct(private readonly array $board)
     {
@@ -97,6 +97,8 @@ final class MovementValidator
             return null;
         }
 
-        return ($seat * (int) $this->board['cellsPerArm'] + $progress) % $this->ringCells;
+        $start = $this->board['startIndices'][$seat] ?? $seat * (int) $this->board['cellsPerArm'];
+
+        return ((int) $start + $progress) % $this->ringCells;
     }
 }

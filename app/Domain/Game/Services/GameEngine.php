@@ -21,7 +21,7 @@ final class GameEngine
     private readonly int $goal;
 
     /**
-     * @param  array{arms: int, cellsPerArm: int, homeLength: int, safeCells?: list<int>}  $board
+     * @param  array{arms: int, cellsPerArm: int, homeLength: int, safeCells?: list<int>, startIndices?: list<int>}  $board
      */
     public function __construct(array $board)
     {

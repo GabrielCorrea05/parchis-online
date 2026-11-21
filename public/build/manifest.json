@@ -1,40 +1,40 @@
 {
-  "_ColorPicker-Bg39m7eW.js": {
-    "file": "assets/ColorPicker-Bg39m7eW.js",
+  "_ColorPicker-CYn-ea2g.js": {
+    "file": "assets/ColorPicker-CYn-ea2g.js",
     "name": "ColorPicker",
     "imports": [
       "resources/js/app.ts",
-      "_PlayerBadge-xVMoRq0F.js"
+      "_PlayerBadge-BXHJEsFV.js"
     ]
   },
-  "_PlayerBadge-xVMoRq0F.js": {
-    "file": "assets/PlayerBadge-xVMoRq0F.js",
+  "_PlayerBadge-BXHJEsFV.js": {
+    "file": "assets/PlayerBadge-BXHJEsFV.js",
     "name": "PlayerBadge",
     "imports": [
       "resources/js/app.ts"
     ]
   },
-  "_PlayerList-CNe_M4Bn.js": {
-    "file": "assets/PlayerList-CNe_M4Bn.js",
+  "_PlayerList-B0zMpg3Q.js": {
+    "file": "assets/PlayerList-B0zMpg3Q.js",
     "name": "PlayerList",
     "imports": [
       "resources/js/app.ts",
-      "_PlayerBadge-xVMoRq0F.js"
+      "_PlayerBadge-BXHJEsFV.js"
     ]
   },
-  "_gameApi-IE3gJPuw.js": {
-    "file": "assets/gameApi-IE3gJPuw.js",
+  "_gameApi-BMaurkhM.js": {
+    "file": "assets/gameApi-BMaurkhM.js",
     "name": "gameApi",
     "imports": [
       "resources/js/app.ts"
     ]
   },
-  "_rematch-C29IMq9o.js": {
-    "file": "assets/rematch-C29IMq9o.js",
+  "_rematch-j1AB8lmM.js": {
+    "file": "assets/rematch-j1AB8lmM.js",
     "name": "rematch",
     "imports": [
       "resources/js/app.ts",
-      "_gameApi-IE3gJPuw.js"
+      "_gameApi-BMaurkhM.js"
     ]
   },
   "resources/css/app.css": {
@@ -47,7 +47,7 @@
     "isEntry": true
   },
   "resources/js/app.ts": {
-    "file": "assets/app-DatjDVdU.js",
+    "file": "assets/app-CB6t2VaA.js",
     "name": "app",
     "src": "resources/js/app.ts",
     "isEntry": true,
@@ -62,81 +62,81 @@
     ]
   },
   "resources/js/pages/Games/Board.vue": {
-    "file": "assets/Board-Cym0-OLM.js",
+    "file": "assets/Board-DCAkeP2t.js",
     "name": "Board",
     "src": "resources/js/pages/Games/Board.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.ts",
-      "_PlayerBadge-xVMoRq0F.js",
-      "_PlayerList-CNe_M4Bn.js",
-      "_gameApi-IE3gJPuw.js"
+      "_PlayerBadge-BXHJEsFV.js",
+      "_PlayerList-B0zMpg3Q.js",
+      "_gameApi-BMaurkhM.js"
     ]
   },
   "resources/js/pages/Games/Result.vue": {
-    "file": "assets/Result-CUFEHc5k.js",
+    "file": "assets/Result-Dnc58_Ht.js",
     "name": "Result",
     "src": "resources/js/pages/Games/Result.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.ts",
-      "_PlayerBadge-xVMoRq0F.js",
-      "_gameApi-IE3gJPuw.js",
-      "_rematch-C29IMq9o.js"
+      "_PlayerBadge-BXHJEsFV.js",
+      "_gameApi-BMaurkhM.js",
+      "_rematch-j1AB8lmM.js"
     ]
   },
   "resources/js/pages/Results/Index.vue": {
-    "file": "assets/Index-ox7ZiSxn.js",
+    "file": "assets/Index-Bg-4F0YI.js",
     "name": "Index",
     "src": "resources/js/pages/Results/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.ts",
-      "_PlayerBadge-xVMoRq0F.js"
+      "_PlayerBadge-BXHJEsFV.js"
     ]
   },
   "resources/js/pages/Results/Show.vue": {
-    "file": "assets/Show-LM0xF2k5.js",
+    "file": "assets/Show-DD50C61B.js",
     "name": "Show",
     "src": "resources/js/pages/Results/Show.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.ts",
-      "_PlayerBadge-xVMoRq0F.js"
+      "_PlayerBadge-BXHJEsFV.js"
     ]
   },
   "resources/js/pages/Rooms/Join.vue": {
-    "file": "assets/Join-DO2yMPLC.js",
+    "file": "assets/Join-DU9d8uu9.js",
     "name": "Join",
     "src": "resources/js/pages/Rooms/Join.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.ts",
-      "_PlayerBadge-xVMoRq0F.js",
-      "_ColorPicker-Bg39m7eW.js"
+      "_PlayerBadge-BXHJEsFV.js",
+      "_ColorPicker-CYn-ea2g.js"
     ]
   },
   "resources/js/pages/Rooms/Waiting.vue": {
-    "file": "assets/Waiting-D-im75Ei.js",
+    "file": "assets/Waiting-OkJPLG_I.js",
     "name": "Waiting",
     "src": "resources/js/pages/Rooms/Waiting.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.ts",
-      "_PlayerBadge-xVMoRq0F.js",
-      "_PlayerList-CNe_M4Bn.js",
-      "_rematch-C29IMq9o.js"
+      "_PlayerBadge-BXHJEsFV.js",
+      "_PlayerList-B0zMpg3Q.js",
+      "_rematch-j1AB8lmM.js"
     ]
   },
   "resources/js/pages/Welcome.vue": {
-    "file": "assets/Welcome-CPi6x-a6.js",
+    "file": "assets/Welcome-Cvv044py.js",
     "name": "Welcome",
     "src": "resources/js/pages/Welcome.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.ts",
-      "_PlayerBadge-xVMoRq0F.js",
-      "_ColorPicker-Bg39m7eW.js"
+      "_PlayerBadge-BXHJEsFV.js",
+      "_ColorPicker-CYn-ea2g.js"
     ]
   }
 }

@@ -11,12 +11,14 @@ const props = withDefaults(
         color?: string;
         safe?: boolean;
         patternId?: string;
+        label?: number | string;
     }>(),
     {
         kind: 'normal',
         color: '',
         safe: false,
         patternId: 'hatch-safe',
+        label: undefined,
     },
 );
 
@@ -42,6 +44,31 @@ const stroke = computed(() => {
 const pattern = computed(() =>
     props.safe ? `url(#${props.patternId})` : undefined,
 );
+
+// Las seguras llevan una estrella, no solo un color o una trama.
+const starPoints = computed(() => {
+    const radius = props.size * 0.17;
+    const inner = radius * 0.45;
+    const points: string[] = [];
+
+    for (let i = 0; i < 10; i++) {
+        const r = i % 2 === 0 ? radius : inner;
+        const angle = -Math.PI / 2 + (i * Math.PI) / 5;
+        points.push(
+            `${(props.x + r * Math.cos(angle)).toFixed(2)},${(props.y + r * Math.sin(angle)).toFixed(2)}`,
+        );
+    }
+
+    return points.join(' ');
+});
+
+const symbolFill = computed(() =>
+    props.kind === 'salida' && props.color
+        ? 'var(--c-on-player)'
+        : 'var(--c-ink)',
+);
+const labelSize = computed(() => Math.max(9, Math.round(props.size * 0.3)));
+const labelY = computed(() => props.y + props.size * 0.13);
 </script>
 
 <template>
@@ -66,6 +93,24 @@ const pattern = computed(() =>
             :fill="pattern"
             pointer-events="none"
         />
+        <polygon
+            v-if="safe && kind !== 'salida'"
+            :points="starPoints"
+            :fill="symbolFill"
+            pointer-events="none"
+        />
+        <text
+            v-if="label !== undefined && kind === 'salida'"
+            :x="x"
+            :y="labelY"
+            text-anchor="middle"
+            :font-size="labelSize"
+            font-weight="700"
+            :fill="symbolFill"
+            pointer-events="none"
+        >
+            {{ label }}
+        </text>
         <path
             v-if="kind === 'meta' || kind === 'goal'"
             :d="`M${x - size * 0.2} ${y + size * 0.2} L${x} ${y - size * 0.2} L${x + size * 0.2} ${y + size * 0.2}`"

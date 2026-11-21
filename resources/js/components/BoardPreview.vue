@@ -52,6 +52,7 @@ const safeCells = computed(() => new Set<number>(props.board.safeCells ?? []));
         />
 
         <circle
+            v-if="board.geometry !== 'cross'"
             :cx="board.center.x"
             :cy="board.center.y"
             r="310"
@@ -68,8 +69,11 @@ const safeCells = computed(() => new Set<number>(props.board.safeCells ?? []));
             :y="cell.y"
             :size="cellSize"
             :kind="cell.kind"
-            :color="board.armsDetail[cell.arm]?.color ?? ''"
+            :color="
+                cell.occupied ? (board.armsDetail[cell.arm]?.color ?? '') : ''
+            "
             :safe="safeCells.has(cell.index)"
+            :label="cell.label"
             pattern-id="preview-hatch-safe"
         />
 

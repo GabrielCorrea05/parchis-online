@@ -10,7 +10,7 @@ use App\Application\Game\Exceptions\GameActionRejected;
 final class GameBoard
 {
     /**
-     * @return array{arms: int, cellsPerArm: int, homeLength: int, safeCells?: list<int>}
+     * @return array{arms: int, cellsPerArm: int, homeLength: int, safeCells?: list<int>, startIndices?: list<int>}
      */
     public static function forEngine(mixed $board): array
     {
@@ -28,6 +28,12 @@ final class GameBoard
             throw new GameActionRejected('La configuración del tablero no es válida.');
         }
 
+        $startIndices = $board['startIndices'] ?? null;
+
+        if ($startIndices !== null && ! is_array($startIndices)) {
+            throw new GameActionRejected('La configuración del tablero no es válida.');
+        }
+
         $shape = [
             'arms' => $board['arms'],
             'cellsPerArm' => $board['cellsPerArm'],
@@ -36,6 +42,10 @@ final class GameBoard
 
         if ($safeCells !== null) {
             $shape['safeCells'] = array_values(array_map('intval', $safeCells));
+        }
+
+        if ($startIndices !== null) {
+            $shape['startIndices'] = array_values(array_map('intval', $startIndices));
         }
 
         return $shape;

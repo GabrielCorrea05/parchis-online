@@ -39,11 +39,8 @@ const occupied = computed(() => {
         if (piece.progress === null || piece.progress >= ringCells.value) {
             continue;
         }
-        const index =
-            props.board.cells.find(
-                (cell) => cell.arm === piece.seat && cell.kind === 'salida',
-            )?.index ?? 0;
-        const cell = (index + piece.progress) % ringCells.value;
+        const start = props.board.startIndices?.[piece.seat] ?? 0;
+        const cell = (start + piece.progress) % ringCells.value;
         const list = map.get(cell) ?? [];
         list.push(piece);
         map.set(cell, list);
@@ -53,11 +50,9 @@ const occupied = computed(() => {
 
 const playerById = computed(() => new Map(props.players.map((p) => [p.id, p])));
 
-function cellIndex(piece: GamePiece): number | null {
-    const cell = props.board.cells.find(
-        (item) => item.arm === piece.seat && item.kind === 'salida',
-    );
-    return cell ? (cell.index + piece.progress!) % ringCells.value : null;
+function cellIndex(piece: GamePiece): number {
+    const start = props.board.startIndices?.[piece.seat] ?? 0;
+    return (start + piece.progress!) % ringCells.value;
 }
 
 function homePoint(piece: GamePiece): { x: number; y: number } | null {
@@ -86,8 +81,7 @@ function piecePoint(piece: GamePiece): { x: number; y: number } | null {
     if (piece.progress >= ringCells.value) {
         return homePoint(piece);
     }
-    const index = cellIndex(piece);
-    const cell = index === null ? undefined : props.board.cells[index];
+    const cell = props.board.cells[cellIndex(piece)];
     return cell ? { x: cell.x, y: cell.y } : null;
 }
 
@@ -95,7 +89,7 @@ function offsetFor(piece: GamePiece): { x: number; y: number } {
     if (piece.progress === null || piece.progress >= ringCells.value) {
         return { x: 0, y: 0 };
     }
-    const index = cellIndex(piece) ?? -1;
+    const index = cellIndex(piece);
     const list = occupied.value.get(index) ?? [piece];
     const i = list.findIndex((item) => item.id === piece.id);
     const offset = (i < 0 ? 0 : i) - (list.length - 1) / 2;
@@ -227,8 +221,11 @@ function onKeydown(event: KeyboardEvent): void {
             :y="cell.y"
             :size="cellSize"
             :kind="cell.kind"
-            :color="board.armsDetail[cell.arm]?.color ?? ''"
+            :color="
+                cell.occupied ? (board.armsDetail[cell.arm]?.color ?? '') : ''
+            "
             :safe="safeCells.has(cell.index)"
+            :label="cell.label"
         />
 
         <g v-for="piece in pieces" :key="piece.id">

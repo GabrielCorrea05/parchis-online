@@ -19,6 +19,8 @@ export type BoardCell = {
     kind: 'salida' | 'normal';
     safe: boolean;
     occupied: boolean;
+    /** Numeración clásica del parchís (5, 22, 39, 56 en las salidas). */
+    label?: number;
     x: number;
     y: number;
 };
@@ -47,6 +49,8 @@ export type BoardConfig = {
     cells: BoardCell[];
     occupiedArms: number[];
     safeCells: number[];
+    /** Índice interno de la salida de cada brazo (0, 17, 34, 51). */
+    startIndices?: number[];
 };
 
 export type Room = {

@@ -453,7 +453,7 @@ final class GameService
     }
 
     /**
-     * @return array{0: array<string, mixed>, 1: array{arms: int, cellsPerArm: int, homeLength: int, safeCells?: list<int>}}
+     * @return array{0: array<string, mixed>, 1: array{arms: int, cellsPerArm: int, homeLength: int, safeCells?: list<int>, startIndices?: list<int>}}
      */
     private function assertActive(Game $game, Player $player, bool $checkTurn): array
     {

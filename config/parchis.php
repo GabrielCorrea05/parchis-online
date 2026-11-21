@@ -39,7 +39,25 @@ return [
 
     'boards' => [
         3 => ['cells_per_arm' => 12, 'geometry' => 'triangle'],
-        4 => ['cells_per_arm' => 13, 'geometry' => 'cross'],
+        4 => [
+            'cells_per_arm' => 17,
+            'geometry' => 'cross',
+            'cell_size' => 34,
+            'home_length' => 7,
+            // 3 seguras por brazo: salida + dos estrellas (12 en total).
+            'safe_offsets' => [0, 7, 12],
+            // El índice interno 0 es la casilla clásica 5; así s_a = a*17.
+            'label_offset' => 4,
+            // Una única plantilla de 17 celdas, rotada 90° por brazo.
+            // Procede del SVG clásico de 68 casillas (rejilla 21x21):
+            // la salida 5 está en (+2,+6) y la casilla 68 en (0,+10).
+            'cross_arm_offsets' => [
+                [2, 6], [2, 5], [2, 4], [2, 3],
+                [3, 2], [4, 2], [5, 2], [6, 2],
+                [7, 2], [8, 2], [9, 2], [10, 2],
+                [10, 0], [10, -1], [9, -1], [8, -1], [7, -1],
+            ],
+        ],
         6 => ['cells_per_arm' => 10, 'geometry' => 'star'],
     ],
 

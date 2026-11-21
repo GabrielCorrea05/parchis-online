@@ -222,11 +222,18 @@ it('genera el tablero de forma paramétrica para 3, 4 y 6 brazos', function () {
 
     $board = BoardFactory::forArms(4, [0 => 'red', 1 => 'blue']);
 
-    expect($board['cells'])->toHaveCount(52)
-        ->and($board['safeCells'])->toBe([0, 6, 13, 19])
+    expect($board['cells'])->toHaveCount(68)
+        ->and($board['safeCells'])->toBe([0, 7, 12, 17, 24, 29])
         ->and($board['cells'][0]['occupied'])->toBeTrue()
-        ->and($board['cells'][26]['occupied'])->toBeFalse()
+        ->and($board['cells'][34]['occupied'])->toBeFalse()
         ->and($board['armsDetail'][2]['occupied'])->toBeFalse();
+
+    $classic = BoardFactory::forArms(4, [0 => 'red', 1 => 'yellow', 2 => 'blue', 3 => 'green']);
+
+    expect($classic['safeCells'])->toHaveCount(12)
+        ->and($classic['startIndices'])->toBe([0, 17, 34, 51])
+        ->and(array_map(fn (int $index): int => $classic['cells'][$index]['label'], $classic['startIndices']))
+        ->toBe([5, 22, 39, 56]);
 
     $star = BoardFactory::forArms(6, []);
 

@@ -110,7 +110,7 @@ describe('comprobaciones específicas de accesibilidad', () => {
             .find('[data-legal-piece="true"]')
             .attributes('aria-label');
         expect(label).toContain('Ficha 2 de Marta');
-        expect(label).toContain('en el recorrido, casilla 1');
+        expect(label).toContain('en el recorrido, casilla 5');
         expect(label).toContain('se puede mover');
     });
 
@@ -157,8 +157,12 @@ describe('comprobaciones específicas de accesibilidad', () => {
         expect(wrapper.find('[role="status"]').exists()).toBe(true);
     });
 
-    it('el tablero usa el constructor correcto para 4 brazos', () => {
+    it('el tablero usa el constructor clásico para 4 brazos', () => {
         expect(board.arms).toBe(4);
+        expect(board.cellsPerArm).toBe(17);
+        expect(board.homeLength).toBe(7);
+        expect(board.startIndices).toEqual([0, 17, 34, 51]);
+        expect(board.safeCells).toHaveLength(6);
     });
 });
 

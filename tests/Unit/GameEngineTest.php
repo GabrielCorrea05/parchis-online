@@ -179,9 +179,10 @@ it('genera tableros parametrizados de 3, 4 y 6 brazos con casas y pasillos', fun
         expect($board['cells'])->toHaveCount($expectedCells)
             ->and($board['bases'])->toHaveCount($arms)
             ->and($board['homes'])->toHaveCount($arms)
-            ->and($board['homes'][0]['cells'])->toHaveCount(6)
-            ->and($board['homes'][0]['goals'])->toHaveCount(4)
-            ->and($board['safeCells'])->toHaveCount(4)
+            ->and($board['homes'][0]['cells'])->toHaveCount($arms === 4 ? 7 : 6)
+            ->and($board['homes'][0]['goals'])->toHaveCount($arms === 4 ? 1 : 4)
+            ->and(array_sum(array_map(fn (array $home): int => count($home['goals']), $board['homes'])))->toBe($arms === 4 ? 4 : $arms * 4)
+            ->and($board['safeCells'])->toHaveCount($arms === 4 ? 6 : 4)
             ->and($board['cells'][0]['next'])->toBe(1);
     }
 });

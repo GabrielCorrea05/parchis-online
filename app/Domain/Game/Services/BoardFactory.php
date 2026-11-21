@@ -41,14 +41,25 @@ final class BoardFactory
         $center = config('parchis.center');
         $outer = (float) config('parchis.outer_radius');
         $inner = (float) config('parchis.inner_radius');
-        $cellSize = (int) config('parchis.cell_size');
-        $homeLength = (int) config('parchis.home_length');
+        $cellSize = (int) ($boards[$arms]['cell_size'] ?? config('parchis.cell_size'));
+        $homeLength = (int) ($boards[$arms]['home_length'] ?? config('parchis.home_length'));
+        $safeOffsets = $boards[$arms]['safe_offsets'] ?? [0, intdiv($cellsPerArm, 2)];
+        $labelOffset = (int) ($boards[$arms]['label_offset'] ?? 0);
+        $crossOffsets = $boards[$arms]['cross_arm_offsets'] ?? [];
+        $gridStep = (float) config('parchis.view_box') / 21;
         $palette = config('parchis.colors');
 
         $armsDetail = [];
         for ($arm = 0; $arm < $arms; $arm++) {
-            $angle = -90 + ($arm * 360 / $arms);
+            $angle = self::angleForArm($arm, $arms, $geometry);
             $color = $colors[$arm] ?? array_key_first($palette);
+            $base = $geometry === 'cross'
+                ? self::gridPoint($center, self::rotateOffset([-9, 9], $arm), $gridStep)
+                : self::point($center, $angle, $outer + 70);
+            $entrance = $geometry === 'cross' && isset($crossOffsets[0])
+                ? self::gridPoint($center, self::rotateOffset($crossOffsets[0], $arm), $gridStep)
+                : self::point($center, $angle, self::radiusForArm($arm, $arms, $outer, $inner, $geometry));
+
             $armsDetail[] = [
                 'index' => $arm,
                 'angle' => $angle,
@@ -56,8 +67,8 @@ final class BoardFactory
                 'hex' => $palette[$color] ?? '#64748b',
                 'occupied' => array_key_exists($arm, $colors),
                 'salidaIndex' => $arm * $cellsPerArm,
-                'base' => self::point($center, $angle, $outer + 70),
-                'entrance' => self::point($center, $angle, self::radiusForArm($arm, $arms, $outer, $inner, $geometry)),
+                'base' => $base,
+                'entrance' => $entrance,
             ];
         }
 
@@ -79,17 +90,36 @@ final class BoardFactory
                 ],
             ];
 
-            $entranceRadius = self::distance($center, $arm['entrance']);
             $homeCells = [];
-            for ($step = 0; $step < $homeLength; $step++) {
-                $radius = max(62.0, $entranceRadius - 26 - $step * (($entranceRadius - 100) / max(1, $homeLength)));
-                $homeCells[] = self::point($center, $angle, $radius);
+            if ($geometry === 'cross') {
+                // La casilla 4 está en (1,+7) y la 5 en (+2,+6): el pasillo
+                // arranca en (0,+7) y sube por la columna central hasta (0,+1).
+                for ($step = 0; $step < $homeLength; $step++) {
+                    $homeCells[] = self::gridPoint(
+                        $center,
+                        self::rotateOffset([0, 7 - $step], (int) $arm['index']),
+                        $gridStep,
+                    );
+                }
+            } else {
+                $entranceRadius = self::distance($center, $arm['entrance']);
+                for ($step = 0; $step < $homeLength; $step++) {
+                    $radius = max(62.0, $entranceRadius - 26 - $step * (($entranceRadius - 100) / max(1, $homeLength)));
+                    $homeCells[] = self::point($center, $angle, $radius);
+                }
             }
 
             $goals = [];
-            for ($slot = 0; $slot < 4; $slot++) {
-                $goalAngle = $angle - 18 + ($slot * 12);
-                $goals[] = self::point($center, $goalAngle, 42);
+            if ($geometry === 'cross') {
+                // Cuatro plazas en torno al centro, una por brazo, girando
+                // la misma plantilla como el resto del tablero.
+                $goalOffset = self::rotateOffset([0.45, 0.45], (int) $arm['index']);
+                $goals[] = self::gridPoint($center, $goalOffset, $gridStep);
+            } else {
+                for ($slot = 0; $slot < 4; $slot++) {
+                    $goalAngle = $angle - 18 + ($slot * 12);
+                    $goals[] = self::point($center, $goalAngle, 42);
+                }
             }
 
             $homes[] = [
@@ -105,24 +135,33 @@ final class BoardFactory
         $cells = [];
         for ($index = 0; $index < $totalCells; $index++) {
             $arm = intdiv($index, $cellsPerArm);
-            $progressInsideArm = ($index % $cellsPerArm) / $cellsPerArm;
+            $offsetInArm = $index % $cellsPerArm;
 
-            $from = self::radiusForArm($arm, $arms, $outer, $inner, $geometry);
-            $to = self::radiusForArm(($arm + 1) % $arms, $arms, $outer, $inner, $geometry);
-            $radius = $from + ($to - $from) * $progressInsideArm;
-
-            $angle = -90 + ($index / $totalCells) * 360;
-            $isSalida = $index % $cellsPerArm === 0;
+            if ($geometry === 'cross' && isset($crossOffsets[$offsetInArm])) {
+                $point = self::gridPoint(
+                    $center,
+                    self::rotateOffset($crossOffsets[$offsetInArm], $arm),
+                    $gridStep,
+                );
+            } else {
+                $progressInsideArm = $offsetInArm / $cellsPerArm;
+                $from = self::radiusForArm($arm, $arms, $outer, $inner, $geometry);
+                $to = self::radiusForArm(($arm + 1) % $arms, $arms, $outer, $inner, $geometry);
+                $radius = $from + ($to - $from) * $progressInsideArm;
+                $angle = -90 + ($index / $totalCells) * 360;
+                $point = self::point($center, $angle, $radius);
+            }
 
             $cells[] = [
                 'index' => $index,
                 'arm' => $arm,
-                'kind' => $isSalida ? 'salida' : 'normal',
+                'kind' => $offsetInArm === 0 ? 'salida' : 'normal',
                 'safe' => false,
                 'occupied' => $armsDetail[$arm]['occupied'],
                 'next' => ($index + 1) % $totalCells,
-                'x' => self::point($center, $angle, $radius)['x'],
-                'y' => self::point($center, $angle, $radius)['y'],
+                'label' => (($index + $labelOffset) % $totalCells) + 1,
+                'x' => $point['x'],
+                'y' => $point['y'],
             ];
         }
 
@@ -132,9 +171,11 @@ final class BoardFactory
                 continue;
             }
 
-            $safeCells[] = $arm['salidaIndex'];
-            $safeCells[] = $arm['salidaIndex'] + intdiv($cellsPerArm, 2);
+            foreach ($safeOffsets as $offset) {
+                $safeCells[] = (int) $arm['salidaIndex'] + (int) $offset;
+            }
         }
+        sort($safeCells);
 
         foreach ($cells as &$cell) {
             $cell['safe'] = in_array($cell['index'], $safeCells, true);
@@ -156,6 +197,7 @@ final class BoardFactory
             'cells' => $cells,
             'occupiedArms' => array_keys($colors),
             'safeCells' => $safeCells,
+            'startIndices' => array_map('intval', array_column($armsDetail, 'salidaIndex')),
         ];
     }
 
@@ -169,6 +211,46 @@ final class BoardFactory
             'x' => round($point['x'] + $dx, 2),
             'y' => round($point['y'] + $dy, 2),
         ];
+    }
+
+    /**
+     * Gira una celda de la plantilla del brazo 0 tantos cuartos de vuelta
+     * como indique el brazo (sentido antihorario, como el tablero clásico).
+     *
+     * @param  array<int, float|int>  $offset
+     * @return array<int, float|int>
+     */
+    private static function rotateOffset(array $offset, int $arm): array
+    {
+        [$x, $y] = $offset;
+
+        for ($i = 0; $i < $arm; $i++) {
+            [$x, $y] = [$y, -$x];
+        }
+
+        return [$x, $y];
+    }
+
+    /**
+     * @param  array{x: int, y: int}  $center
+     * @param  array<int, float|int>  $offset
+     * @return array{x: float, y: float}
+     */
+    private static function gridPoint(array $center, array $offset, float $step): array
+    {
+        return [
+            'x' => round($center['x'] + $offset[0] * $step, 2),
+            'y' => round($center['y'] + $offset[1] * $step, 2),
+        ];
+    }
+
+    private static function angleForArm(int $arm, int $arms, string $geometry): float
+    {
+        if ($geometry === 'cross') {
+            return 90 - ($arm * 360 / $arms);
+        }
+
+        return -90 + ($arm * 360 / $arms);
     }
 
     /**

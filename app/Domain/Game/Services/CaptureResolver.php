@@ -13,7 +13,7 @@ final class CaptureResolver
     private readonly MovementValidator $movement;
 
     /**
-     * @param  array{arms: int, cellsPerArm: int, homeLength: int, safeCells?: list<int>}  $board
+     * @param  array{arms: int, cellsPerArm: int, homeLength: int, safeCells?: list<int>, startIndices?: list<int>}  $board
      */
     public function __construct(private readonly array $board)
     {

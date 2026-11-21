@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { playerColor, playerShape } from '@/lib/playerStyle';
+import { boardPlayerColor, playerShape } from '@/lib/playerStyle';
 
 const props = withDefaults(
     defineProps<{
@@ -28,7 +28,7 @@ const emit = defineEmits<{
 }>();
 
 const shape = computed(() => playerShape(props.color));
-const fill = computed(() => playerColor(props.color));
+const fill = computed(() => boardPlayerColor(props.color));
 
 const polygonPoints = computed(() => {
     const r = props.r;
@@ -109,7 +109,7 @@ const fontSize = computed(() =>
             :cy="cy"
             :r="r"
             :fill="fill"
-            stroke="var(--c-on-player)"
+            stroke="var(--board-on-player)"
             stroke-width="2"
         />
         <rect
@@ -120,14 +120,14 @@ const fontSize = computed(() =>
             :height="r * 1.72"
             rx="2"
             :fill="fill"
-            stroke="var(--c-on-player)"
+            stroke="var(--board-on-player)"
             stroke-width="2"
         />
         <polygon
             v-else
             :points="polygonPoints"
             :fill="fill"
-            stroke="var(--c-on-player)"
+            stroke="var(--board-on-player)"
             stroke-width="2"
             stroke-linejoin="round"
         />
@@ -137,7 +137,7 @@ const fontSize = computed(() =>
             text-anchor="middle"
             :font-size="fontSize"
             font-weight="800"
-            fill="var(--c-on-player)"
+            fill="var(--board-on-player)"
             pointer-events="none"
         >
             {{ number }}

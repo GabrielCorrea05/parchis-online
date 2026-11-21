@@ -2,8 +2,9 @@
 import { computed, ref } from 'vue';
 import CellShape from '@/components/CellShape.vue';
 import PieceShape from '@/components/PieceShape.vue';
-import { playerColor } from '@/lib/playerStyle';
-import type { GameBoard, GamePiece } from '@/types';
+import { armWedge, rosettePoints } from '@/lib/boardDecor';
+import { boardPlayerColor } from '@/lib/playerStyle';
+import type { GameBoard, GamePiece, Point } from '@/types';
 
 const props = withDefaults(
     defineProps<{
@@ -49,6 +50,36 @@ const occupied = computed(() => {
 });
 
 const playerById = computed(() => new Map(props.players.map((p) => [p.id, p])));
+
+const wedges = computed(() =>
+    props.board.armsDetail.map((arm) => ({
+        arm,
+        points: armWedge(props.board.center, arm),
+    })),
+);
+const rosette = computed(() =>
+    rosettePoints(props.board.center, Math.max(42, cellSize.value * 1.8)),
+);
+
+function baseBox(slots: Point[]): {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+} {
+    const xs = slots.map((slot) => slot.x);
+    const ys = slots.map((slot) => slot.y);
+    const pad = cellSize.value * 0.62;
+    const left = Math.min(...xs) - pad;
+    const top = Math.min(...ys) - pad;
+
+    return {
+        x: left,
+        y: top,
+        width: Math.max(...xs) - Math.min(...xs) + pad * 2,
+        height: Math.max(...ys) - Math.min(...ys) + pad * 2,
+    };
+}
 
 function cellIndex(piece: GamePiece): number {
     const start = props.board.startIndices?.[piece.seat] ?? 0;
@@ -160,30 +191,121 @@ function onKeydown(event: KeyboardEvent): void {
             </pattern>
         </defs>
 
-        <rect
-            x="0"
-            y="0"
-            width="800"
-            height="800"
-            rx="32"
-            fill="var(--board-bg)"
-            stroke="var(--board-line)"
-            stroke-width="2"
-        />
+        <!-- Marco de madera y fieltro: un solo tablero físico, sin imágenes. -->
+        <g aria-hidden="true" pointer-events="none">
+            <rect
+                x="2"
+                y="2"
+                width="796"
+                height="796"
+                rx="34"
+                fill="var(--board-frame-dark)"
+            />
+            <rect
+                x="9"
+                y="9"
+                width="782"
+                height="782"
+                rx="29"
+                fill="var(--board-frame-light)"
+            />
+            <rect
+                x="18"
+                y="18"
+                width="764"
+                height="764"
+                rx="24"
+                fill="var(--board-bg)"
+            />
+            <rect
+                x="30"
+                y="30"
+                width="740"
+                height="740"
+                rx="18"
+                fill="var(--board-felt)"
+                stroke="var(--board-frame-dark)"
+                stroke-width="2"
+            />
+            <rect
+                x="37"
+                y="37"
+                width="726"
+                height="726"
+                rx="14"
+                fill="none"
+                stroke="var(--board-center)"
+                stroke-width="1.5"
+                opacity="0.7"
+            />
+            <circle
+                v-for="corner in [
+                    [68, 68],
+                    [732, 68],
+                    [68, 732],
+                    [732, 732],
+                ]"
+                :key="`corner-${corner[0]}-${corner[1]}`"
+                :cx="corner[0]"
+                :cy="corner[1]"
+                r="7"
+                fill="var(--board-center)"
+                opacity="0.8"
+            />
+        </g>
+
+        <!-- Cuñas de color impresas en cada brazo. -->
+        <g aria-hidden="true" pointer-events="none">
+            <polygon
+                v-for="wedge in wedges"
+                :key="`wedge-${wedge.arm.index}`"
+                :points="wedge.points"
+                :fill="boardPlayerColor(wedge.arm.color)"
+                :opacity="wedge.arm.occupied ? 0.16 : 0.06"
+            />
+            <circle
+                :cx="board.center.x"
+                :cy="board.center.y"
+                r="74"
+                fill="var(--board-center)"
+                opacity="0.2"
+            />
+            <polygon
+                :points="rosette"
+                fill="var(--board-center)"
+                opacity="0.35"
+            />
+        </g>
 
         <g v-for="base in board.bases" :key="`base-${base.arm}`">
             <rect
+                v-bind="baseBox(base.slots)"
+                rx="14"
+                fill="var(--board-base)"
+                :stroke="boardPlayerColor(base.color)"
+                :stroke-width="base.occupied ? 3 : 1.5"
+                :stroke-dasharray="base.occupied ? undefined : '6 5'"
+                opacity="0.95"
+            />
+            <circle
                 v-for="(slot, i) in base.slots"
                 :key="i"
-                :x="slot.x - cellSize * 0.55"
-                :y="slot.y - cellSize * 0.55"
-                :width="cellSize * 1.1"
-                :height="cellSize * 1.1"
-                rx="6"
-                fill="var(--board-base)"
-                :stroke="playerColor(base.color)"
-                :stroke-width="base.occupied ? 2.5 : 1"
-                :stroke-dasharray="base.occupied ? undefined : '4 4'"
+                :cx="slot.x"
+                :cy="slot.y"
+                :r="cellSize * 0.46"
+                fill="var(--board-cell)"
+                :stroke="boardPlayerColor(base.color)"
+                stroke-width="2"
+            />
+            <circle
+                v-for="(slot, i) in base.slots"
+                :key="`hole-${i}`"
+                :cx="slot.x"
+                :cy="slot.y"
+                :r="cellSize * 0.3"
+                fill="var(--board-frame-dark)"
+                opacity="0.16"
+                pointer-events="none"
             />
         </g>
 
@@ -196,8 +318,8 @@ function onKeydown(event: KeyboardEvent): void {
                 :width="cellSize * 0.84"
                 :height="cellSize * 0.84"
                 rx="4"
-                :fill="playerColor(home.color)"
-                :opacity="home.occupied ? 0.2 : 0.06"
+                :fill="boardPlayerColor(home.color)"
+                :opacity="home.occupied ? (i % 2 === 0 ? 0.34 : 0.2) : 0.1"
                 stroke="var(--board-line)"
             />
             <rect
@@ -209,8 +331,8 @@ function onKeydown(event: KeyboardEvent): void {
                 :height="cellSize * 0.84"
                 rx="4"
                 fill="var(--board-cell)"
-                :stroke="playerColor(home.color)"
-                stroke-width="2"
+                :stroke="boardPlayerColor(home.color)"
+                stroke-width="2.5"
             />
         </g>
 

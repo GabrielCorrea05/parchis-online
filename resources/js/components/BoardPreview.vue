@@ -2,11 +2,21 @@
 import { computed } from 'vue';
 import CellShape from '@/components/CellShape.vue';
 import PieceShape from '@/components/PieceShape.vue';
+import { armWedge, rosettePoints } from '@/lib/boardDecor';
+import { boardPlayerColor } from '@/lib/playerStyle';
 import type { BoardConfig } from '@/types';
 
 const props = defineProps<{
     board: BoardConfig;
 }>();
+
+const wedges = computed(() =>
+    props.board.armsDetail.map((arm) => ({
+        arm,
+        points: armWedge(props.board.center, arm),
+    })),
+);
+const rosette = computed(() => rosettePoints(props.board.center, 58));
 
 const cellSize = computed(() => Math.max(12, props.board.cellSize));
 const pieceRadius = computed(() => cellSize.value * 0.4);
@@ -40,27 +50,54 @@ const safeCells = computed(() => new Set<number>(props.board.safeCells ?? []));
             </pattern>
         </defs>
 
-        <rect
-            x="0"
-            y="0"
-            width="800"
-            height="800"
-            rx="32"
-            fill="var(--board-bg)"
-            stroke="var(--board-line)"
-            stroke-width="2"
-        />
-
-        <circle
-            v-if="board.geometry !== 'cross'"
-            :cx="board.center.x"
-            :cy="board.center.y"
-            r="310"
-            fill="none"
-            stroke="var(--board-line)"
-            stroke-width="1"
-            stroke-dasharray="6 8"
-        />
+        <g aria-hidden="true" pointer-events="none">
+            <rect
+                x="2"
+                y="2"
+                width="796"
+                height="796"
+                rx="34"
+                fill="var(--board-frame-dark)"
+            />
+            <rect
+                x="9"
+                y="9"
+                width="782"
+                height="782"
+                rx="29"
+                fill="var(--board-frame-light)"
+            />
+            <rect
+                x="18"
+                y="18"
+                width="764"
+                height="764"
+                rx="24"
+                fill="var(--board-bg)"
+            />
+            <rect
+                x="30"
+                y="30"
+                width="740"
+                height="740"
+                rx="18"
+                fill="var(--board-felt)"
+                stroke="var(--board-frame-dark)"
+                stroke-width="2"
+            />
+            <polygon
+                v-for="wedge in wedges"
+                :key="`wedge-${wedge.arm.index}`"
+                :points="wedge.points"
+                :fill="boardPlayerColor(wedge.arm.color)"
+                :opacity="wedge.arm.occupied ? 0.16 : 0.06"
+            />
+            <polygon
+                :points="rosette"
+                fill="var(--board-center)"
+                opacity="0.35"
+            />
+        </g>
 
         <CellShape
             v-for="cell in board.cells"
@@ -83,19 +120,23 @@ const safeCells = computed(() => new Set<number>(props.board.safeCells ?? []));
             pointer-events="none"
         >
             <rect
-                :x="arm.base.x - 24"
-                :y="arm.base.y - 24"
-                width="48"
-                height="48"
-                rx="10"
+                :x="arm.base.x - 30"
+                :y="arm.base.y - 30"
+                width="60"
+                height="60"
+                rx="12"
                 fill="var(--board-base)"
-                :stroke="
-                    arm.occupied
-                        ? `var(--player-${arm.color})`
-                        : 'var(--board-line)'
-                "
-                :stroke-width="arm.occupied ? 2.5 : 1"
-                :stroke-dasharray="arm.occupied ? undefined : '4 4'"
+                :stroke="boardPlayerColor(arm.color)"
+                :stroke-width="arm.occupied ? 3 : 1.5"
+                :stroke-dasharray="arm.occupied ? undefined : '6 5'"
+            />
+            <circle
+                :cx="arm.base.x"
+                :cy="arm.base.y"
+                r="20"
+                fill="var(--board-cell)"
+                :stroke="boardPlayerColor(arm.color)"
+                stroke-width="2"
             />
             <PieceShape
                 v-if="arm.occupied"
@@ -112,7 +153,7 @@ const safeCells = computed(() => new Set<number>(props.board.safeCells ?? []));
             :cx="board.center.x"
             :cy="board.center.y"
             r="46"
-            fill="var(--c-ink)"
+            fill="var(--board-center)"
         />
         <text
             :x="board.center.x"
@@ -120,7 +161,7 @@ const safeCells = computed(() => new Set<number>(props.board.safeCells ?? []));
             text-anchor="middle"
             font-size="20"
             font-weight="700"
-            fill="var(--c-surface)"
+            fill="var(--board-on-cell)"
         >
             {{ board.arms }}
         </text>
@@ -129,8 +170,8 @@ const safeCells = computed(() => new Set<number>(props.board.safeCells ?? []));
             :y="board.center.y + 18"
             text-anchor="middle"
             font-size="12"
-            fill="var(--c-surface)"
-            opacity="0.75"
+            fill="var(--board-on-cell)"
+            opacity="0.8"
         >
             brazos
         </text>

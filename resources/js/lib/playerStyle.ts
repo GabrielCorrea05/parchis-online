@@ -51,3 +51,14 @@ export function playerColor(color: string): string {
 
     return `var(--player-${safe})`;
 }
+
+/**
+ * Colores impresos en el tablero físico: se mantienen oscuros también en el
+ * tema oscuro para que las fichas y las casillas sigan siendo legibles sobre
+ * el fieltro marfileño.
+ */
+export function boardPlayerColor(color: string): string {
+    const safe = Object.hasOwn(SHAPES, color) ? color : 'red';
+
+    return `var(--board-player-${safe})`;
+}

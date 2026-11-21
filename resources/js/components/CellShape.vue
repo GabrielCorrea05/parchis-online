@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { playerColor } from '@/lib/playerStyle';
+import { boardPlayerColor } from '@/lib/playerStyle';
 
 const props = withDefaults(
     defineProps<{
@@ -24,7 +24,7 @@ const props = withDefaults(
 
 const fill = computed(() => {
     if (props.kind === 'salida' && props.color) {
-        return playerColor(props.color);
+        return boardPlayerColor(props.color);
     }
 
     return 'var(--board-cell)';
@@ -32,10 +32,10 @@ const fill = computed(() => {
 
 const stroke = computed(() => {
     if (props.kind === 'salida' && props.color) {
-        return playerColor(props.color);
+        return boardPlayerColor(props.color);
     }
     if (props.kind === 'meta' || props.kind === 'goal') {
-        return 'var(--c-accent)';
+        return 'var(--board-center)';
     }
 
     return 'var(--board-line)';
@@ -64,8 +64,8 @@ const starPoints = computed(() => {
 
 const symbolFill = computed(() =>
     props.kind === 'salida' && props.color
-        ? 'var(--c-on-player)'
-        : 'var(--c-ink)',
+        ? 'var(--board-on-player)'
+        : 'var(--board-on-cell)',
 );
 const labelSize = computed(() => Math.max(9, Math.round(props.size * 0.3)));
 const labelY = computed(() => props.y + props.size * 0.13);
@@ -74,6 +74,16 @@ const labelY = computed(() => props.y + props.size * 0.13);
 <template>
     <g>
         <rect
+            :x="x - size / 2 + 0.8"
+            :y="y - size / 2 + 1.4"
+            :width="size"
+            :height="size"
+            rx="3"
+            fill="var(--board-frame-dark)"
+            opacity="0.18"
+            pointer-events="none"
+        />
+        <rect
             :x="x - size / 2"
             :y="y - size / 2"
             :width="size"
@@ -81,7 +91,18 @@ const labelY = computed(() => props.y + props.size * 0.13);
             rx="3"
             :fill="fill"
             :stroke="stroke"
-            :stroke-width="kind === 'salida' ? 2.5 : 1.25"
+            :stroke-width="kind === 'salida' ? 2.5 : 1.1"
+        />
+        <rect
+            :x="x - size / 2 + 2"
+            :y="y - size / 2 + 2"
+            :width="size - 4"
+            :height="size - 4"
+            rx="2"
+            fill="none"
+            stroke="var(--board-cell-edge)"
+            stroke-width="0.8"
+            pointer-events="none"
         />
         <rect
             v-if="safe"
@@ -115,7 +136,7 @@ const labelY = computed(() => props.y + props.size * 0.13);
             v-if="kind === 'meta' || kind === 'goal'"
             :d="`M${x - size * 0.2} ${y + size * 0.2} L${x} ${y - size * 0.2} L${x + size * 0.2} ${y + size * 0.2}`"
             fill="none"
-            stroke="var(--c-accent)"
+            stroke="var(--board-center)"
             stroke-width="1.6"
             stroke-linecap="round"
             pointer-events="none"

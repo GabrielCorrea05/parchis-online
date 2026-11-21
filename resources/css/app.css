@@ -54,15 +54,30 @@
     --c-on-accent: #ffffff;
     --c-on-player: #ffffff;
 
-    --board-bg: var(--c-surface-2);
-    --board-cell: var(--c-surface);
-    --board-line: var(--c-line);
-    --board-safe-line: var(--c-accent);
-    --board-base: var(--c-surface-2);
+    /* Tablero físico: madera, fieltro y casillas marfileñas. Estos tokens
+       no cambian con el tema: un parchís real se ve igual de día o de noche. */
+    --board-bg: #6f3f1f;
+    --board-frame-dark: #4b2912;
+    --board-frame-light: #a86c3c;
+    --board-felt: #efdcb3;
+    --board-cell: #fbf1d8;
+    --board-cell-edge: #d9c294;
+    --board-line: #8a663a;
+    --board-safe-line: #b8862f;
+    --board-base: #ead4a6;
+    --board-center: #d2a44f;
+    --board-on-cell: #3a2a16;
+    --board-on-player: #fff7e8;
+    --board-player-red: #b32126;
+    --board-player-yellow: #976000;
+    --board-player-blue: #2f4bb8;
+    --board-player-green: #166f47;
+    --board-player-orange: #0b6d7c;
+    --board-player-purple: #6f2fa6;
     --piece-shadow: rgb(15 23 42 / 0.2);
 
     /* Seis colores de jugador, siempre acompañados de forma/símbolo.
-       Contraste medido sobre --board-bg (#f1f4f9): 4.9:1–6.6:1.
+       Contraste medido sobre superficies claras: 4.9:1–6.6:1.
        El número blanco alcanza 5.4:1–7.3:1 sobre cada color. */
     --player-red: #c2262b;
     --player-yellow: #9a5b00;
@@ -95,7 +110,7 @@
     --c-danger-text: #ff6b6f;
     --c-focus: #a5a5ff;
     --c-on-accent: #0f1524;
-    /* En oscuro se usan versiones claras: 5.9:1–9.1:1 sobre --board-bg (#222c42).
+    /* En oscuro se usan versiones claras: 5.9:1–9.1:1 sobre superficies oscuras.
        La tinta oscura del número alcanza 6.9:1–10.6:1. */
     --c-on-player: #172033;
     --player-red: #ff878b;
@@ -107,11 +122,18 @@
 
     --piece-shadow: rgb(0 0 0 / 0.45);
 
-    --board-bg: var(--c-surface-2);
-    --board-cell: var(--c-surface);
-    --board-line: var(--c-line);
-    --board-safe-line: var(--c-accent);
-    --board-base: var(--c-surface-2);
+    --board-bg: #5a3218;
+    --board-frame-dark: #3a1f0e;
+    --board-frame-light: #8a552d;
+    --board-felt: #d9c49a;
+    --board-cell: #f2e4c4;
+    --board-cell-edge: #c2a271;
+    --board-line: #6f4b26;
+    --board-safe-line: #c99a3d;
+    --board-base: #d8bd8a;
+    --board-center: #c0923e;
+    --board-on-cell: #2c1e0d;
+    --board-on-player: #fff7e8;
 
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
     --shadow-md: 0 10px 30px -12px rgb(0 0 0 / 0.6);

@@ -73,4 +73,18 @@ jobs:
             exit 1
           fi
           composer install --no-dev --optimize-autoloader --no-interaction --no-progress
-          wasmer deploy --publish-package --bump --non-interactive
+
+          # El almacenamiento de Wasmer devuelve 500 esporádicos al subir el
+          # paquete. Reintentamos solo el despliegue; los tests ya pasaron.
+          for intento in 1 2 3; do
+            echo "Despliegue en Wasmer: intento ${intento}/3"
+            if wasmer deploy --publish-package --bump --non-interactive; then
+              exit 0
+            fi
+            if [ "${intento}" -lt 3 ]; then
+              sleep 15
+            fi
+          done
+
+          echo "No se pudo desplegar en Wasmer después de 3 intentos." >&2
+          exit 1

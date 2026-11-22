@@ -8,8 +8,6 @@ enum Color: string
     case Yellow = 'yellow';
     case Blue = 'blue';
     case Green = 'green';
-    case Orange = 'orange';
-    case Purple = 'purple';
 
     /** @return list<string> */
     public static function values(): array

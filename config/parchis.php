@@ -11,7 +11,7 @@ return [
     'code_length' => 4,
     'code_alphabet' => 'ABCDEFGHJKLMNPQRSTUVWXYZ',
     'min_players' => 2,
-    'max_players' => 6,
+    'max_players' => 4,
 
     // Una sala en waiting sin actividad durante estas horas se considera abandonada.
     'abandoned_room_hours' => (int) env('PARCHIS_ABANDONED_ROOM_HOURS', 24),
@@ -23,54 +23,38 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Tablero parametrizado por número de brazos
+    | Parchís español clásico
     |--------------------------------------------------------------------------
     |
-    | Una única definición genérica. Nunca se escriben tres tableros a mano.
+    | Una sola plantilla de 19x19 para 2, 3 o 4 jugadores. No existen tableros
+    | de 6 brazos ni colores adicionales. El recorrido es antihorario y se
+    | deriva de las etiquetas clásicas 1..68 con una única fórmula por tramo.
     |
     */
 
+    'grid_size' => 19,
     'view_box' => 800,
-    'center' => ['x' => 400, 'y' => 400],
-    'outer_radius' => 300,
-    'inner_radius' => 205,
-    'cell_size' => 16,
-    'home_length' => 6,
+    'center' => ['x' => 400.0, 'y' => 400.0],
 
-    // Salida clásica de cada brazo. El color elegido fija el asiento.
-    'color_order' => ['yellow', 'blue', 'red', 'green', 'orange', 'purple'],
+    'color_order' => ['yellow', 'blue', 'red', 'green'],
+
+    'colors' => [
+        'yellow' => '#976000',
+        'blue' => '#2f4bb8',
+        'red' => '#b32126',
+        'green' => '#166f47',
+    ],
 
     'boards' => [
         4 => [
             'cells_per_arm' => 17,
-            'geometry' => 'cross',
-            'cell_size' => 34,
             'home_length' => 7,
-            // 3 seguras por brazo: salida + dos estrellas (12 en total),
-            // incluso cuando un brazo no tiene jugador.
+            'geometry' => 'cross',
+            'cell_size' => 42,
             'all_arms_safe' => true,
             'safe_offsets' => [0, 7, 12],
             // El índice interno 0 es la casilla clásica 5; así s_a = a*17.
             'label_offset' => 4,
-            // Una única plantilla de 17 celdas, rotada 90° por brazo.
-            // Procede del SVG clásico de 68 casillas (rejilla 21x21):
-            // la salida 5 está en (+2,+6) y la casilla 68 en (0,+10).
-            'cross_arm_offsets' => [
-                [2, 6], [2, 5], [2, 4], [2, 3],
-                [3, 2], [4, 2], [5, 2], [6, 2],
-                [7, 2], [8, 2], [9, 2], [10, 2],
-                [10, 0], [10, -1], [9, -1], [8, -1], [7, -1],
-            ],
         ],
-        6 => ['cells_per_arm' => 10, 'geometry' => 'star'],
-    ],
-
-    'colors' => [
-        'red' => '#ef4444',
-        'yellow' => '#eab308',
-        'blue' => '#3b82f6',
-        'green' => '#22c55e',
-        'orange' => '#f97316',
-        'purple' => '#a855f7',
     ],
 ];

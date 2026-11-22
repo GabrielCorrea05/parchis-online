@@ -25,10 +25,6 @@ const points = computed(() => {
             return '12,2 22,21 2,21';
         case 'diamond':
             return '12,2 22,12 12,22 2,12';
-        case 'hexagon':
-            return '12,2 21,7 21,17 12,22 3,17 3,7';
-        case 'star':
-            return '12,2 15,9 22,9 16,14 18,21 12,17 6,21 8,14 2,9 9,9';
         default:
             return '';
     }

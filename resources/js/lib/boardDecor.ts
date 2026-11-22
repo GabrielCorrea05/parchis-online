@@ -2,8 +2,8 @@ import type { BoardArm, Point } from '@/types';
 
 /**
  * Cuña de color que se imprime en cada brazo del tablero clásico.
- * Se deriva del centro y de la base del brazo, así que sirve igual para
- * 3, 4 y 6 brazos sin dibujar plantillas distintas.
+ * Se deriva del centro y de la base del brazo, así que sirve para los cuatro
+ * brazos del tablero clásico sin dibujar plantillas distintas.
  */
 export function armWedge(center: Point, arm: BoardArm, spread = 104): string {
     const angle = Math.atan2(arm.base.y - center.y, arm.base.x - center.x);

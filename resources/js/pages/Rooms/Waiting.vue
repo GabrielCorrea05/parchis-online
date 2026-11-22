@@ -282,9 +282,9 @@ const copyCode = async () => {
                     </div>
                     <BoardPreview :board="room.board" />
                     <p class="hint mt-3 text-center">
-                        Los brazos sin jugador se dibujan igual, con sus 3
-                        casillas seguras y sin fichas. Con 5 o 6 jugadores el
-                        tablero pasa a 6 brazos en estrella.
+                        Siempre es el mismo tablero clásico de 19×19: los brazos
+                        sin jugador se dibujan igual, con sus 3 casillas seguras
+                        y sin fichas.
                     </p>
                 </section>
             </div>

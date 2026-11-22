@@ -60,9 +60,9 @@
     --board-frame-dark: #4b2912;
     --board-frame-light: #a86c3c;
     --board-felt: #efdcb3;
-    --board-cell: #fbf1d8;
-    --board-cell-edge: #d9c294;
-    --board-line: #8a663a;
+    --board-cell: #ffffff;
+    --board-cell-edge: #d7d7d7;
+    --board-line: #7c7c7c;
     --board-safe-line: #b8862f;
     --board-base: #ead4a6;
     --board-center: #d2a44f;
@@ -72,19 +72,15 @@
     --board-player-yellow: #976000;
     --board-player-blue: #2f4bb8;
     --board-player-green: #166f47;
-    --board-player-orange: #0b6d7c;
-    --board-player-purple: #6f2fa6;
     --piece-shadow: rgb(15 23 42 / 0.2);
 
-    /* Seis colores de jugador, siempre acompañados de forma/símbolo.
+    /* Cuatro colores de jugador, siempre acompañados de forma/símbolo.
        Contraste medido sobre superficies claras: 4.9:1–6.6:1.
        El número blanco alcanza 5.4:1–7.3:1 sobre cada color. */
     --player-red: #c2262b;
     --player-yellow: #9a5b00;
     --player-blue: #3451c7;
     --player-green: #17794d;
-    --player-orange: #0b7484;
-    --player-purple: #7535ad;
 
     --dur-fast: 140ms;
     --dur-base: 240ms;
@@ -117,8 +113,6 @@
     --player-yellow: #ffc861;
     --player-blue: #9db4ff;
     --player-green: #6ee0a8;
-    --player-orange: #5ed0e0;
-    --player-purple: #c493f5;
 
     --piece-shadow: rgb(0 0 0 / 0.45);
 
@@ -126,9 +120,9 @@
     --board-frame-dark: #3a1f0e;
     --board-frame-light: #8a552d;
     --board-felt: #d9c49a;
-    --board-cell: #f2e4c4;
-    --board-cell-edge: #c2a271;
-    --board-line: #6f4b26;
+    --board-cell: #ffffff;
+    --board-cell-edge: #cfcfcf;
+    --board-line: #5a5a5a;
     --board-safe-line: #c99a3d;
     --board-base: #d8bd8a;
     --board-center: #c0923e;
@@ -381,7 +375,6 @@
         border: 1px solid var(--c-line);
         border-radius: var(--radius-lg);
         background: var(--board-bg);
-        box-shadow: var(--shadow-lg);
     }
 
     /* En móvil el tablero mantiene un ancho legible y se desplaza en horizontal. */

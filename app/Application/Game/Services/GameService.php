@@ -83,7 +83,7 @@ final class GameService
             $count = $members->count();
 
             if ($count < config('parchis.min_players') || $count > config('parchis.max_players')) {
-                throw new GameActionRejected('Se necesitan entre 2 y 6 jugadores.');
+                throw new GameActionRejected('Se necesitan entre 2 y 4 jugadores.');
             }
 
             $arms = BoardFactory::armsForPlayers($count);

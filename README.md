@@ -1,6 +1,6 @@
 # Parchís online
 
-Parchís para 2–6 jugadores, en tiempo real, desde el navegador y sin login. Cada
+Parchís para 2–4 jugadores, en tiempo real, desde el navegador y sin login. Cada
 jugador elige apodo y color; el primero crea la sala y es el host. El servidor
 es la única autoridad: tira el dado, valida movimientos, resuelve capturas y
 decide el ganador. El cliente solo dibuja el estado que recibe y envía
@@ -16,19 +16,24 @@ en producción.
 
 ## 1. Reglas resumidas
 
-- 2, 3 o 4 jugadores → **tablero español de 4 brazos** (68 casillas); 5–6 →
-  **6 brazos en estrella**.
-- El tablero se genera con una única fábrica paramétrica (`BoardFactory::forArms()`);
-  los brazos vacíos se dibujan igual y conservan su salida y sus casillas seguras.
-  El color elegido fija el brazo: amarillo 5, azul 22, rojo 39, verde 56.
+- Siempre se usa el **parchís español clásico**: rejilla 19×19, cruz de cuatro
+  brazos de 3×8 alrededor de un centro 3×3, 68 casillas numeradas y casas 8×8.
+  No hay tablero de 6 brazos ni colores quinto/sexto.
+- El recorrido es **antihorario**: la casilla 1 está en la punta inferior
+  derecha. Salidas: amarillo 5, azul 22, rojo 39, verde 56. Entradas a pasillo:
+  verde 17, amarillo 68, azul 34, rojo 51. La meta exige tirada exacta.
+- El tablero se genera con una única fábrica (`BoardFactory::forArms(4)`); los
+  brazos vacíos se dibujan igual y conservan su salida y sus 3 casillas seguras.
+  Con 2 o 3 jugadores se usa exactamente el mismo tablero.
 - 4 fichas por jugador. `progress = null` es casa; `0..M-1` es anillo;
   `M..M+homeLength-1` es columna de casa; `M+homeLength` es meta
-  (`homeLength = 7` en 4 brazos y `6` en 6).
+  (`M = 68`, `homeLength = 7`, meta en 75).
 - Con **5** se puede sacar una ficha de casa (a `progress = 0`) o mover 5 pasos
   una ficha desplegada. Con cualquier otro valor solo se mueven fichas desplegadas.
 - Entrar en columna **no** exige tirada exacta; llegar a meta **sí**. Pasarse de meta es ilegal.
-- Captura solo al caer, solo en anillo y solo en casilla no segura. En la cruz de
-  4 brazos hay **12 seguras fijas**; en la estrella, 2 por brazo ocupado.
+- Captura solo al caer, solo en anillo y solo en casilla no segura. Hay **12
+  seguras fijas** (etiquetas 5, 12, 17, 22, 29, 34, 39, 46, 51, 56, 63 y 68),
+  marcadas con estrella aunque el brazo esté vacío.
 - Un **6** da turno extra solo si se ejecutó un movimiento legal. El tercer 6
   consecutivo se consume sin mover. Victoria antes que turno extra.
 - Empieza el host; después se sigue el `seat` (fijado por el color), saltando
@@ -133,7 +138,7 @@ Estado de las comprobaciones en la última entrega:
 
 | Comprobación                              | Resultado                   |
 | ----------------------------------------- | --------------------------- |
-| `php artisan test --compact`              | 46/46 tests, 385 assertions |
+| `php artisan test --compact`              | 47/47 tests, 398 assertions |
 | `composer lint:check`                     | OK                          |
 | `npm run types:check`                     | OK                          |
 | `npm run build`                           | OK                          |
@@ -185,7 +190,7 @@ unirse y las consultas públicas de historial.
 | GET    | `/api/rooms/{code}`               | Estado de la sala de espera                            |
 | POST   | `/api/rooms/{code}/join`          | Unirse `{nickname, color}` → `{playerToken}`           |
 | POST   | `/api/rooms/{code}/leave`         | Salir de la sala                                       |
-| POST   | `/api/rooms/{code}/start`         | Iniciar (solo host, 2–6 jugadores)                     |
+| POST   | `/api/rooms/{code}/start`         | Iniciar (solo host, 2–4 jugadores)                     |
 | GET    | `/api/games/{code}`               | Snapshot autoritativo actual                           |
 | POST   | `/api/games/{code}/roll`          | Tirar dado (servidor)                                  |
 | POST   | `/api/games/{code}/moves`         | Mover ficha `{pieceId}`                                |
@@ -195,7 +200,8 @@ unirse y las consultas públicas de historial.
 | POST   | `/api/games/{code}/rematch/token` | Token reutilizable en la sala clonada                  |
 
 Rutas web Inertia: `/`, `/rooms/{code}`, `/games/{code}`, `/partidas` y
-`/partidas/{code}`.
+`/partidas/{code}`. La vista de prueba del tablero clásico (paso 1, sin fichas
+ni lógica) está en `/board-preview`.
 
 Canales WebSocket efectivos:
 

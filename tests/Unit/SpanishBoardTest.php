@@ -55,37 +55,36 @@ it('comprueba la vuelta completa, la entrada al pasillo y la tirada exacta a met
         ->and($validator->legalMoves(2, $pieces, 1))->toBe([]);
 });
 
-it('sitúa la salida, la casilla 68 y el pasillo en la cruz clásica', function () {
+it('sitúa la salida, la casilla 68 y el pasillo en la rejilla 19x19', function () {
     $board = BoardFactory::forArms(4, [0 => 'red', 1 => 'blue']);
-    $step = 800 / 21;
+    $step = 800 / 19;
 
     $cell = fn (int $index): array => $board['cells'][$index];
     $point = fn (array $item): array => [$item['x'], $item['y']];
     $near = fn (array $a, array $b): bool => abs($a[0] - $b[0]) < 1 && abs($a[1] - $b[1]) < 1;
 
-    // El índice interno 0 es la salida clásica 5: (+2,+6) desde el centro.
-    expect($near($point($cell(0)), [400 + 2 * $step, 400 + 6 * $step]))->toBeTrue()
-        ->and($near($point($cell(63)), [400, 400 + 10 * $step]))->toBeTrue()
-        ->and($near($point($cell(67)), [400 + $step, 400 + 7 * $step]))->toBeTrue();
+    // La casilla 5 (índice 0) está en (fila 14, columna 10); la 68 en (18, 9).
+    expect($near($point($cell(0)), [400 + $step, 400 + 5 * $step]))->toBeTrue()
+        ->and($near($point($cell(63)), [400, 400 + 9 * $step]))->toBeTrue()
+        ->and($near($point($cell(67)), [400 + $step, 400 + 6 * $step]))->toBeTrue();
 
-    // La última casilla del anillo (la 4) está a un paso de la entrada al pasillo.
-    $last = $point($cell(67));
+    // La casilla 68 y la primera del pasillo son contiguas en la columna 9.
+    $last = $point($cell(63));
     $entrance = $point($board['homes'][0]['cells'][0]);
 
-    expect(abs(abs($last[0] - $entrance[0]) + abs($last[1] - $entrance[1]) - $step) < 1)->toBeTrue()
+    expect(abs($last[1] - $entrance[1] - $step) < 1)->toBeTrue()
         ->and($board['homes'][0]['cells'])->toHaveCount(7)
-        ->and($near($point(end($board['homes'][0]['cells'])), [400, 400 + $step]))->toBeTrue()
-        ->and($near($point($board['homes'][0]['goals'][0]), [400 + 0.45 * $step, 400 + 0.45 * $step]))->toBeTrue();
+        ->and($near($point(end($board['homes'][0]['cells'])), [400, 400 + 2 * $step]))->toBeTrue();
 
     // Una sola plantilla rotada: las salidas son las rotaciones de la primera.
     foreach ([1, 2, 3] as $arm) {
         $expected = match ($arm) {
-            1 => [628.57, 323.81],
-            2 => [323.81, 171.43],
-            3 => [171.43, 476.19],
+            1 => [400 + 5 * $step, 400 - $step],
+            2 => [400 - $step, 400 - 5 * $step],
+            3 => [400 - 5 * $step, 400 + $step],
         };
 
-        expect($point($cell($board['startIndices'][$arm])))->toBe($expected);
+        expect($near($point($cell($board['startIndices'][$arm])), $expected))->toBeTrue();
     }
 });
 

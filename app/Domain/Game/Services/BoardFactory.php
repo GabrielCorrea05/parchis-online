@@ -7,29 +7,33 @@ use InvalidArgumentException;
 /**
  * Única fuente de verdad para la geometría del tablero.
  *
- * El tablero NO se escribe tres veces: se genera a partir del número de brazos.
+ * Solo existe el parchís español clásico: cruz de 4 brazos, 68 casillas,
+ * casa circular de 8x8 en cada esquina y 7 casillas de pasillo por color.
  * El cliente recibe este array y solo lo dibuja.
  */
 final class BoardFactory
 {
+    private const GRID = 19;
+
+    private const SAFE_LABELS = [5, 12, 17, 22, 29, 34, 39, 46, 51, 56, 63, 68];
+
     public static function armsForPlayers(int $players): int
     {
-        return match (true) {
-            $players >= 2 && $players <= 4 => 4,
-            $players >= 5 && $players <= 6 => 6,
-            default => throw new InvalidArgumentException("Número de jugadores no soportado: {$players}"),
-        };
+        if ($players < 2 || $players > 4) {
+            throw new InvalidArgumentException("Número de jugadores no soportado: {$players}");
+        }
+
+        return 4;
     }
 
     /**
-     * Colores canónicos de salida: amarillo=5, azul=22, rojo=39, verde=56
-     * (y cian/violeta en los brazos quinto y sexto del tablero de estrella).
+     * Colores canónicos: amarillo=5, azul=22, rojo=39 y verde=56.
      *
      * @return list<string>
      */
     public static function colorOrder(int $arms): array
     {
-        if (! in_array($arms, [4, 6], true)) {
+        if ($arms !== 4) {
             throw new InvalidArgumentException("Número de brazos no soportado: {$arms}");
         }
 
@@ -39,7 +43,7 @@ final class BoardFactory
             throw new InvalidArgumentException('Falta parchis.color_order en la configuración.');
         }
 
-        return array_values(array_slice($order, 0, $arms));
+        return array_values($order);
     }
 
     /**
@@ -87,39 +91,37 @@ final class BoardFactory
      */
     public static function forArms(int $arms, array $colors = []): array
     {
-        $boards = config('parchis.boards');
-
-        if (! isset($boards[$arms])) {
+        if ($arms !== 4) {
             throw new InvalidArgumentException("Número de brazos no soportado: {$arms}");
         }
 
-        $cellsPerArm = (int) $boards[$arms]['cells_per_arm'];
-        $geometry = $boards[$arms]['geometry'];
-        $totalCells = $arms * $cellsPerArm;
+        $board = config('parchis.boards.4');
 
+        if (! is_array($board)) {
+            throw new InvalidArgumentException('Falta la configuración del tablero de 4 brazos.');
+        }
+
+        $cellsPerArm = (int) $board['cells_per_arm'];
+        $totalCells = $arms * $cellsPerArm;
+        $homeLength = (int) $board['home_length'];
+        $labelOffset = (int) $board['label_offset'];
+        $step = (float) config('parchis.view_box') / self::GRID;
         $center = config('parchis.center');
-        $outer = (float) config('parchis.outer_radius');
-        $inner = (float) config('parchis.inner_radius');
-        $cellSize = (int) ($boards[$arms]['cell_size'] ?? config('parchis.cell_size'));
-        $homeLength = (int) ($boards[$arms]['home_length'] ?? config('parchis.home_length'));
-        $safeOffsets = $boards[$arms]['safe_offsets'] ?? [0, intdiv($cellsPerArm, 2)];
-        $labelOffset = (int) ($boards[$arms]['label_offset'] ?? 0);
-        $crossOffsets = $boards[$arms]['cross_arm_offsets'] ?? [];
-        $gridStep = (float) config('parchis.view_box') / 21;
         $palette = config('parchis.colors');
         $colorOrder = self::colorOrder($arms);
-        $allArmsSafe = (bool) ($boards[$arms]['all_arms_safe'] ?? false);
+
+        $safeCells = array_map(
+            fn (int $label): int => self::indexForLabel($label, $totalCells, $labelOffset),
+            self::SAFE_LABELS,
+        );
+        sort($safeCells);
 
         $armsDetail = [];
         for ($arm = 0; $arm < $arms; $arm++) {
-            $angle = self::angleForArm($arm, $arms, $geometry);
+            $angle = 90 - ($arm * 360 / $arms);
             $color = $colors[$arm] ?? $colorOrder[$arm];
-            $base = $geometry === 'cross'
-                ? self::gridPoint($center, self::rotateOffset([-9, 9], $arm), $gridStep)
-                : self::point($center, $angle, $outer + 70);
-            $entrance = $geometry === 'cross' && isset($crossOffsets[0])
-                ? self::gridPoint($center, self::rotateOffset($crossOffsets[0], $arm), $gridStep)
-                : self::point($center, $angle, self::radiusForArm($arm, $arms, $outer, $inner, $geometry));
+            $base = self::gridPoint($center, self::rotateOffset([5, 5], $arm), $step);
+            $entrance = self::gridPoint($center, self::rotateOffset([0, 8], $arm), $step);
 
             $armsDetail[] = [
                 'index' => $arm,
@@ -136,55 +138,50 @@ final class BoardFactory
         $bases = [];
         $homes = [];
         foreach ($armsDetail as $arm) {
-            $angle = (float) $arm['angle'];
+            $armIndex = (int) $arm['index'];
             $base = $arm['base'];
+            $slots = [];
+
+            foreach ([-1.35, 1.35] as $dx) {
+                foreach ([-1.35, 1.35] as $dy) {
+                    $slots[] = self::offset($base, $dx * $step, $dy * $step);
+                }
+            }
+
             $bases[] = [
-                'arm' => $arm['index'],
+                'arm' => $armIndex,
                 'color' => $arm['color'],
                 'hex' => $arm['hex'],
                 'occupied' => $arm['occupied'],
-                'slots' => [
-                    self::offset($base, -20, -20),
-                    self::offset($base, 20, -20),
-                    self::offset($base, -20, 20),
-                    self::offset($base, 20, 20),
-                ],
+                'slots' => $slots,
             ];
 
             $homeCells = [];
-            if ($geometry === 'cross') {
-                // La casilla 4 está en (1,+7) y la 5 en (+2,+6): el pasillo
-                // arranca en (0,+7) y sube por la columna central hasta (0,+1).
-                for ($step = 0; $step < $homeLength; $step++) {
-                    $homeCells[] = self::gridPoint(
-                        $center,
-                        self::rotateOffset([0, 7 - $step], (int) $arm['index']),
-                        $gridStep,
-                    );
-                }
-            } else {
-                $entranceRadius = self::distance($center, $arm['entrance']);
-                for ($step = 0; $step < $homeLength; $step++) {
-                    $radius = max(62.0, $entranceRadius - 26 - $step * (($entranceRadius - 100) / max(1, $homeLength)));
-                    $homeCells[] = self::point($center, $angle, $radius);
-                }
+            for ($cell = 0; $cell < $homeLength; $cell++) {
+                $homeCells[] = self::gridPoint(
+                    $center,
+                    self::rotateOffset([0, 8 - $cell], $armIndex),
+                    $step,
+                );
             }
 
-            $goals = [];
-            if ($geometry === 'cross') {
-                // Cuatro plazas en torno al centro, una por brazo, girando
-                // la misma plantilla como el resto del tablero.
-                $goalOffset = self::rotateOffset([0.45, 0.45], (int) $arm['index']);
-                $goals[] = self::gridPoint($center, $goalOffset, $gridStep);
-            } else {
-                for ($slot = 0; $slot < 4; $slot++) {
-                    $goalAngle = $angle - 18 + ($slot * 12);
-                    $goals[] = self::point($center, $goalAngle, 42);
-                }
-            }
+            $goalOffsets = [
+                [-0.62, 0.35],
+                [0.62, 0.35],
+                [-0.28, 1.02],
+                [0.28, 1.02],
+            ];
+            $goals = array_map(
+                fn (array $offset): array => self::gridPoint(
+                    $center,
+                    self::rotateOffset($offset, $armIndex),
+                    $step,
+                ),
+                $goalOffsets,
+            );
 
             $homes[] = [
-                'arm' => $arm['index'],
+                'arm' => $armIndex,
                 'color' => $arm['color'],
                 'hex' => $arm['hex'],
                 'occupied' => $arm['occupied'],
@@ -193,69 +190,40 @@ final class BoardFactory
             ];
         }
 
-        $occupiedArms = array_map('intval', array_keys($colors));
-        sort($occupiedArms);
-
         $cells = [];
         for ($index = 0; $index < $totalCells; $index++) {
+            $label = (($index + $labelOffset) % $totalCells) + 1;
+            [$row, $column] = self::gridCellForLabel($label);
+            $point = self::gridPoint($center, [$column - 9, $row - 9], $step);
             $arm = intdiv($index, $cellsPerArm);
-            $offsetInArm = $index % $cellsPerArm;
-
-            if ($geometry === 'cross' && isset($crossOffsets[$offsetInArm])) {
-                $point = self::gridPoint(
-                    $center,
-                    self::rotateOffset($crossOffsets[$offsetInArm], $arm),
-                    $gridStep,
-                );
-            } else {
-                $progressInsideArm = $offsetInArm / $cellsPerArm;
-                $from = self::radiusForArm($arm, $arms, $outer, $inner, $geometry);
-                $to = self::radiusForArm(($arm + 1) % $arms, $arms, $outer, $inner, $geometry);
-                $radius = $from + ($to - $from) * $progressInsideArm;
-                $angle = -90 + ($index / $totalCells) * 360;
-                $point = self::point($center, $angle, $radius);
-            }
 
             $cells[] = [
                 'index' => $index,
                 'arm' => $arm,
-                'kind' => $offsetInArm === 0 ? 'salida' : 'normal',
-                'safe' => false,
+                'kind' => $index % $cellsPerArm === 0 ? 'salida' : 'normal',
+                'safe' => in_array($index, $safeCells, true),
                 'occupied' => $armsDetail[$arm]['occupied'],
                 'next' => ($index + 1) % $totalCells,
-                'label' => (($index + $labelOffset) % $totalCells) + 1,
+                'label' => $label,
                 'x' => $point['x'],
                 'y' => $point['y'],
+                'row' => $row,
+                'column' => $column,
             ];
         }
 
-        $safeCells = [];
-        foreach ($armsDetail as $arm) {
-            // En la cruz clásica las 12 seguras existen aunque el brazo esté
-            // vacío: son una propiedad del tablero, no del jugador.
-            if (! $allArmsSafe && ! $arm['occupied']) {
-                continue;
-            }
-
-            foreach ($safeOffsets as $offset) {
-                $safeCells[] = (int) $arm['salidaIndex'] + (int) $offset;
-            }
-        }
-        sort($safeCells);
-
-        foreach ($cells as &$cell) {
-            $cell['safe'] = in_array($cell['index'], $safeCells, true);
-        }
-        unset($cell);
+        $occupiedArms = array_map('intval', array_keys($colors));
+        sort($occupiedArms);
 
         return [
             'arms' => $arms,
             'cellsPerArm' => $cellsPerArm,
             'homeLength' => $homeLength,
-            'geometry' => $geometry,
+            'geometry' => 'cross',
             'viewBox' => '0 0 '.config('parchis.view_box').' '.config('parchis.view_box'),
             'center' => $center,
-            'cellSize' => $cellSize,
+            'cellSize' => (int) $board['cell_size'],
+            'gridSize' => self::GRID,
             'palette' => $palette,
             'armsDetail' => $armsDetail,
             'bases' => $bases,
@@ -267,8 +235,76 @@ final class BoardFactory
         ];
     }
 
+    private static function indexForLabel(int $label, int $total, int $offset): int
+    {
+        return (($label - 1 - $offset) % $total + $total) % $total;
+    }
+
     /**
-     * @param  array{x: float, y: float}  $point
+     * Devuelve (fila, columna) en la rejilla 19x19 para una casilla del
+     * recorrido exterior. Es la única definición del camino clásico.
+     *
+     * @return array{0: int, 1: int}
+     */
+    private static function gridCellForLabel(int $label): array
+    {
+        if ($label >= 1 && $label <= 8) {
+            return [19 - $label, 10];
+        }
+
+        if ($label >= 9 && $label <= 15) {
+            return [10, $label + 2];
+        }
+
+        if ($label >= 16 && $label <= 18) {
+            return [26 - $label, 18];
+        }
+
+        if ($label >= 19 && $label <= 25) {
+            return [8, 36 - $label];
+        }
+
+        if ($label >= 26 && $label <= 32) {
+            return [33 - $label, 10];
+        }
+
+        if ($label >= 33 && $label <= 35) {
+            return [0, 43 - $label];
+        }
+
+        if ($label >= 36 && $label <= 42) {
+            return [$label - 35, 8];
+        }
+
+        if ($label >= 43 && $label <= 49) {
+            return [8, 50 - $label];
+        }
+
+        if ($label >= 50 && $label <= 52) {
+            return [$label - 42, 0];
+        }
+
+        if ($label >= 53 && $label <= 59) {
+            return [10, $label - 52];
+        }
+
+        if ($label >= 60 && $label <= 66) {
+            return [$label - 49, 8];
+        }
+
+        if ($label === 67) {
+            return [18, 8];
+        }
+
+        if ($label === 68) {
+            return [18, 9];
+        }
+
+        throw new InvalidArgumentException("Casilla de recorrido no válida: {$label}");
+    }
+
+    /**
+     * @param  array{x: float|int, y: float|int}  $point
      * @return array{x: float, y: float}
      */
     private static function offset(array $point, float $dx, float $dy): array
@@ -298,7 +334,7 @@ final class BoardFactory
     }
 
     /**
-     * @param  array{x: int, y: int}  $center
+     * @param  array{x: float|int, y: float|int}  $center
      * @param  array<int, float|int>  $offset
      * @return array{x: float, y: float}
      */
@@ -307,49 +343,6 @@ final class BoardFactory
         return [
             'x' => round($center['x'] + $offset[0] * $step, 2),
             'y' => round($center['y'] + $offset[1] * $step, 2),
-        ];
-    }
-
-    private static function angleForArm(int $arm, int $arms, string $geometry): float
-    {
-        if ($geometry === 'cross') {
-            return 90 - ($arm * 360 / $arms);
-        }
-
-        return -90 + ($arm * 360 / $arms);
-    }
-
-    /**
-     * @param  array{x: int, y: int}  $center
-     * @param  array{x: float, y: float}  $point
-     */
-    private static function distance(array $center, array $point): float
-    {
-        return sqrt(
-            ($point['x'] - $center['x']) ** 2 + ($point['y'] - $center['y']) ** 2,
-        );
-    }
-
-    private static function radiusForArm(int $arm, int $arms, float $outer, float $inner, string $geometry): float
-    {
-        if ($geometry === 'star') {
-            return $arm % 2 === 0 ? $outer : $inner;
-        }
-
-        return $outer;
-    }
-
-    /**
-     * @param  array{x: int, y: int}  $center
-     * @return array{x: float, y: float}
-     */
-    private static function point(array $center, float $angleDegrees, float $radius): array
-    {
-        $angle = deg2rad($angleDegrees);
-
-        return [
-            'x' => round($center['x'] + $radius * cos($angle), 2),
-            'y' => round($center['y'] + $radius * sin($angle), 2),
         ];
     }
 }

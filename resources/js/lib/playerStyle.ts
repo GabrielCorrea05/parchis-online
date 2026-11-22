@@ -1,18 +1,10 @@
-export type PlayerShape =
-    | 'circle'
-    | 'square'
-    | 'triangle'
-    | 'diamond'
-    | 'hexagon'
-    | 'star';
+export type PlayerShape = 'circle' | 'square' | 'triangle' | 'diamond';
 
 const SHAPES: Record<string, PlayerShape> = {
     red: 'circle',
     yellow: 'square',
     blue: 'triangle',
     green: 'diamond',
-    orange: 'hexagon',
-    purple: 'star',
 };
 
 const LABELS: Record<string, string> = {
@@ -20,8 +12,6 @@ const LABELS: Record<string, string> = {
     yellow: 'Ámbar · cuadrado',
     blue: 'Azul · triángulo',
     green: 'Verde · rombo',
-    orange: 'Cian · hexágono',
-    purple: 'Violeta · estrella',
 };
 
 export function playerShape(color: string): PlayerShape {
@@ -33,8 +23,6 @@ const SHORT_LABELS: Record<string, string> = {
     yellow: 'ámbar',
     blue: 'azul',
     green: 'verde',
-    orange: 'cian',
-    purple: 'violeta',
 };
 
 export function playerLabel(color: string): string {

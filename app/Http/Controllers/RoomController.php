@@ -216,7 +216,7 @@ final class RoomController extends Controller
 
         if ($playerCount < config('parchis.min_players') || $playerCount > config('parchis.max_players')) {
             return to_route('rooms.show', $game->code)
-                ->withErrors(['start' => 'Se necesitan entre 2 y 6 jugadores.']);
+                ->withErrors(['start' => 'Se necesitan entre 2 y 4 jugadores.']);
         }
 
         try {

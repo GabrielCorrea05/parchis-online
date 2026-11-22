@@ -37,29 +37,12 @@ const polygonPoints = computed(() => {
             return `${props.cx},${props.cy - r} ${props.cx + r * 0.92},${props.cy + r * 0.78} ${props.cx - r * 0.92},${props.cy + r * 0.78}`;
         case 'diamond':
             return `${props.cx},${props.cy - r} ${props.cx + r},${props.cy} ${props.cx},${props.cy + r} ${props.cx - r},${props.cy}`;
-        case 'hexagon':
-            return [0, 1, 2, 3, 4, 5]
-                .map((i) => {
-                    const angle = (Math.PI / 3) * i - Math.PI / 2;
-                    return `${props.cx + Math.cos(angle) * r},${props.cy + Math.sin(angle) * r}`;
-                })
-                .join(' ');
-        case 'star':
-            return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-                .map((i) => {
-                    const angle = (Math.PI / 5) * i - Math.PI / 2;
-                    const radius = i % 2 === 0 ? r : r * 0.48;
-                    return `${props.cx + Math.cos(angle) * radius},${props.cy + Math.sin(angle) * radius}`;
-                })
-                .join(' ');
         default:
             return '';
     }
 });
 
-const fontSize = computed(() =>
-    Math.max(8, props.r * (shape.value === 'star' ? 0.65 : 0.9)),
-);
+const fontSize = computed(() => Math.max(8, props.r * 0.9));
 </script>
 
 <template>

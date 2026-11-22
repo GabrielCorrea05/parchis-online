@@ -65,12 +65,12 @@ async function expectNoViolations(wrapper: VueWrapper): Promise<void> {
 
 describe('axe en las pantallas principales', () => {
     it('portada', async () => {
-        await expectNoViolations(render(Welcome, { colors, maxPlayers: 6 }));
+        await expectNoViolations(render(Welcome, { colors, maxPlayers: 4 }));
     });
 
     it('unirse a sala', async () => {
         await expectNoViolations(
-            render(Join, { code: 'K7P2', colors, maxPlayers: 6 }),
+            render(Join, { code: 'K7P2', colors, maxPlayers: 4 }),
         );
     });
 
@@ -97,7 +97,7 @@ describe('axe en las pantallas principales', () => {
 
 describe('comprobaciones específicas de accesibilidad', () => {
     it('incluye enlace para saltar al contenido', () => {
-        const wrapper = render(Welcome, { colors, maxPlayers: 6 });
+        const wrapper = render(Welcome, { colors, maxPlayers: 4 });
         const skip = wrapper.find('.skip-link');
         expect(skip.exists()).toBe(true);
         expect(skip.attributes('href')).toBe('#contenido-principal');
@@ -115,7 +115,7 @@ describe('comprobaciones específicas de accesibilidad', () => {
     });
 
     it('el selector de color navega con flechas', async () => {
-        const wrapper = render(Welcome, { colors, maxPlayers: 6 });
+        const wrapper = render(Welcome, { colors, maxPlayers: 4 });
         const radios = wrapper.findAll('[role="radio"]');
         expect(radios[0]?.attributes('aria-checked')).toBe('true');
         await radios[0]?.trigger('keydown', { key: 'ArrowRight' });
@@ -126,7 +126,7 @@ describe('comprobaciones específicas de accesibilidad', () => {
     });
 
     it('el ajuste de texto y movimiento se aplica al documento', async () => {
-        render(Welcome, { colors, maxPlayers: 6 });
+        render(Welcome, { colors, maxPlayers: 4 });
         const { setTextScale, setReduceMotion } = useAccessibility();
         setTextScale(2);
         setReduceMotion(true);

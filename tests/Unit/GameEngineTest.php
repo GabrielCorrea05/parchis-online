@@ -170,18 +170,17 @@ it('termina la partida al meter la cuarta ficha en la meta', function () {
         ->and(collect($moved['events'])->pluck('type'))->toContain('game_finished');
 });
 
-it('genera tableros parametrizados de 4 y 6 brazos con casas y pasillos', function () {
-    foreach ([4, 6] as $arms) {
-        $board = boardFor($arms);
-        $expectedCells = $arms * config("parchis.boards.{$arms}.cells_per_arm");
+it('genera el tablero clásico de cuatro brazos con casas y pasillos', function () {
+    $arms = 4;
+    $board = boardFor($arms);
+    $expectedCells = $arms * config("parchis.boards.{$arms}.cells_per_arm");
 
-        expect($board['cells'])->toHaveCount($expectedCells)
-            ->and($board['bases'])->toHaveCount($arms)
-            ->and($board['homes'])->toHaveCount($arms)
-            ->and($board['homes'][0]['cells'])->toHaveCount($arms === 4 ? 7 : 6)
-            ->and($board['homes'][0]['goals'])->toHaveCount($arms === 4 ? 1 : 4)
-            ->and(array_sum(array_map(fn (array $home): int => count($home['goals']), $board['homes'])))->toBe($arms === 4 ? 4 : $arms * 4)
-            ->and($board['safeCells'])->toHaveCount($arms === 4 ? 12 : 4)
-            ->and($board['cells'][0]['next'])->toBe(1);
-    }
+    expect($board['cells'])->toHaveCount($expectedCells)
+        ->and($board['bases'])->toHaveCount($arms)
+        ->and($board['homes'])->toHaveCount($arms)
+        ->and($board['homes'][0]['cells'])->toHaveCount(7)
+        ->and($board['homes'][0]['goals'])->toHaveCount(4)
+        ->and(array_sum(array_map(fn (array $home): int => count($home['goals']), $board['homes'])))->toBe(16)
+        ->and($board['safeCells'])->toHaveCount(12)
+        ->and($board['cells'][0]['next'])->toBe(1);
 });

@@ -122,12 +122,12 @@ it('rechaza unirse cuando la sala está llena', function () {
         addPlayer($game, "Jugador{$index}", $color, newToken());
     }
 
-    expect($game->players()->count())->toBe(6);
+    expect($game->players()->count())->toBe(4);
 
-    $this->post("/rooms/{$game->code}/join", ['nickname' => 'Sexto', 'color' => 'red'])
+    $this->post("/rooms/{$game->code}/join", ['nickname' => 'Quinto', 'color' => 'red'])
         ->assertSessionHasErrors('code');
 
-    expect($game->players()->count())->toBe(6);
+    expect($game->players()->count())->toBe(4);
 });
 
 it('rechaza unirse cuando la partida ya ha empezado', function () {
@@ -223,12 +223,14 @@ it('transfiere el rol de host cuando el host abandona la sala de espera', functi
     Event::assertDispatched(HostChanged::class);
 });
 
-it('genera el tablero de forma paramétrica para 4 y 6 brazos', function () {
+it('usa siempre el tablero clásico de cuatro brazos para 2 a 4 jugadores', function () {
     expect(BoardFactory::armsForPlayers(2))->toBe(4)
         ->and(BoardFactory::armsForPlayers(3))->toBe(4)
-        ->and(BoardFactory::armsForPlayers(4))->toBe(4)
-        ->and(BoardFactory::armsForPlayers(5))->toBe(6)
-        ->and(BoardFactory::armsForPlayers(6))->toBe(6);
+        ->and(BoardFactory::armsForPlayers(4))->toBe(4);
+
+    expect(fn () => BoardFactory::armsForPlayers(5))->toThrow(InvalidArgumentException::class)
+        ->and(fn () => BoardFactory::armsForPlayers(6))->toThrow(InvalidArgumentException::class)
+        ->and(fn () => BoardFactory::forArms(6))->toThrow(InvalidArgumentException::class);
 
     $board = BoardFactory::forArms(4, [0 => 'red', 1 => 'blue']);
 
@@ -246,16 +248,13 @@ it('genera el tablero de forma paramétrica para 4 y 6 brazos', function () {
         ->and(array_map(fn (int $index): int => $classic['cells'][$index]['label'], $classic['startIndices']))
         ->toBe([5, 22, 39, 56]);
 
-    $star = BoardFactory::forArms(6, []);
-
-    expect($star['geometry'])->toBe('star')
-        ->and($star['cells'])->toHaveCount(60)
-        ->and($star['safeCells'])->toBe([]);
+    expect($classic['gridSize'])->toBe(19)
+        ->and($classic['geometry'])->toBe('cross');
 });
 
 it('asienta a cada jugador según el color elegido', function () {
     expect(BoardFactory::colorOrder(4))->toBe(['yellow', 'blue', 'red', 'green'])
-        ->and(BoardFactory::colorOrder(6))->toBe(['yellow', 'blue', 'red', 'green', 'orange', 'purple'])
+        ->and(fn () => BoardFactory::colorOrder(6))->toThrow(InvalidArgumentException::class)
         ->and(BoardFactory::seatAssignments(['red', 'yellow'], 4))->toBe([
             0 => ['seat' => 2, 'color' => 'red'],
             1 => ['seat' => 0, 'color' => 'yellow'],

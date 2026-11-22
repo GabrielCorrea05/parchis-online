@@ -76,16 +76,6 @@ const labelY = computed(() => props.y + props.size * 0.33);
 <template>
     <g>
         <rect
-            :x="x - size / 2 + 0.8"
-            :y="y - size / 2 + 1.4"
-            :width="size"
-            :height="size"
-            rx="3"
-            fill="var(--board-frame-dark)"
-            opacity="0.18"
-            pointer-events="none"
-        />
-        <rect
             :x="x - size / 2"
             :y="y - size / 2"
             :width="size"

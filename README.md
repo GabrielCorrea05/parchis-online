@@ -531,6 +531,10 @@ Marca cada punto con 2–3 pestañas o navegadores distintos:
 - [ ] Al iniciar, todas las pestañas navegan a `/games/{code}` y el tablero queda fijado.
 - [ ] El jugador activo ve **Tirar dado**; tras tirar, solo sus fichas legales parpadean.
 - [ ] Mover una ficha actualiza el tablero en todas las pestañas sin recargar.
+- [ ] En la tabla textual (`<details>`) o en `GET /api/games/{code}` se ve el
+      `progress` de una ficha: `0` es su salida clásica (5/22/39/56), `0..67` es
+      el anillo de 68 casillas, `68` entra en la primera casilla del pasillo,
+      `74` es la última y `75` es la meta (solo con tirada exacta).
 - [ ] Recargar una pestaña reconstruye el tablero desde el snapshot sin animaciones.
 - [ ] El dado y los eventos llegan por WSS; no hay error de contenido mixto ni `403` de canal.
 - [ ] `GET /api/games/{code}/result` sin token → `401`; con token ajeno → `403`.

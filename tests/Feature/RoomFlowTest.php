@@ -152,7 +152,7 @@ it('rechaza que el host inicie con menos de dos jugadores', function () {
         ->and($game->arms)->toBeNull();
 });
 
-it('inicia la partida con dos jugadores y fija tres brazos', function () {
+it('inicia la partida con dos jugadores y fija el tablero clásico de cuatro brazos', function () {
     Event::fake([GameStarted::class]);
 
     $game = makeGame();
@@ -161,15 +161,24 @@ it('inicia la partida con dos jugadores y fija tres brazos', function () {
     addPlayer($game, 'Beto', 'blue', newToken());
     $this->withUnencryptedCookie(PlayerSession::COOKIE_NAME, json_encode([$game->code => $token], JSON_THROW_ON_ERROR));
 
-    $this->post("/rooms/{$game->code}/start")->assertRedirect();
+    $this->post("/rooms/{$game->code}/start")->assertRedirect("/rooms/{$game->code}");
 
     $game->refresh();
 
     expect($game->status)->toBe(GameStatus::InProgress)
-        ->and($game->arms)->toBe(3)
-        ->and($game->board_config['arms'])->toBe(3)
-        ->and($game->board_config['occupiedArms'])->toBe([0, 1])
+        ->and($game->arms)->toBe(4)
+        ->and($game->board_config['arms'])->toBe(4)
+        ->and($game->board_config['occupiedArms'])->toBe([1, 2])
+        ->and($game->board_config['safeCells'])->toHaveCount(12)
         ->and($game->started_at)->not->toBeNull();
+
+    // Rojo sale por la 39 (brazo 2) y azul por la 22 (brazo 1).
+    expect($game->players()->where('color', 'blue')->first()->seat)->toBe(1)
+        ->and($game->players()->where('color', 'red')->first()->seat)->toBe(2);
+
+    $state = $game->state;
+    expect($state['currentPlayerId'])->toBe($game->host_player_id)
+        ->and($state['turnOrder'][0])->toBe($game->host_player_id);
 
     Event::assertDispatched(GameStarted::class);
 });
@@ -186,7 +195,8 @@ it('prioriza el token de la cabecera sobre la cookie compartida entre pestañas'
         json_encode([$game->code => $hostToken], JSON_THROW_ON_ERROR),
     )->withHeader(PlayerSession::TOKEN_HEADER, $guestToken)
         ->post("/rooms/{$game->code}/start")
-        ->assertForbidden();
+        ->assertRedirect("/rooms/{$game->code}")
+        ->assertSessionHasErrors('start');
 
     expect($game->refresh()->status)->toBe(GameStatus::Waiting);
 });
@@ -213,9 +223,9 @@ it('transfiere el rol de host cuando el host abandona la sala de espera', functi
     Event::assertDispatched(HostChanged::class);
 });
 
-it('genera el tablero de forma paramétrica para 3, 4 y 6 brazos', function () {
-    expect(BoardFactory::armsForPlayers(2))->toBe(3)
-        ->and(BoardFactory::armsForPlayers(3))->toBe(3)
+it('genera el tablero de forma paramétrica para 4 y 6 brazos', function () {
+    expect(BoardFactory::armsForPlayers(2))->toBe(4)
+        ->and(BoardFactory::armsForPlayers(3))->toBe(4)
         ->and(BoardFactory::armsForPlayers(4))->toBe(4)
         ->and(BoardFactory::armsForPlayers(5))->toBe(6)
         ->and(BoardFactory::armsForPlayers(6))->toBe(6);
@@ -223,10 +233,11 @@ it('genera el tablero de forma paramétrica para 3, 4 y 6 brazos', function () {
     $board = BoardFactory::forArms(4, [0 => 'red', 1 => 'blue']);
 
     expect($board['cells'])->toHaveCount(68)
-        ->and($board['safeCells'])->toBe([0, 7, 12, 17, 24, 29])
+        ->and($board['safeCells'])->toBe([0, 7, 12, 17, 24, 29, 34, 41, 46, 51, 58, 63])
         ->and($board['cells'][0]['occupied'])->toBeTrue()
         ->and($board['cells'][34]['occupied'])->toBeFalse()
-        ->and($board['armsDetail'][2]['occupied'])->toBeFalse();
+        ->and($board['armsDetail'][2]['occupied'])->toBeFalse()
+        ->and($board['armsDetail'][2]['color'])->toBe('red');
 
     $classic = BoardFactory::forArms(4, [0 => 'red', 1 => 'yellow', 2 => 'blue', 3 => 'green']);
 
@@ -240,4 +251,44 @@ it('genera el tablero de forma paramétrica para 3, 4 y 6 brazos', function () {
     expect($star['geometry'])->toBe('star')
         ->and($star['cells'])->toHaveCount(60)
         ->and($star['safeCells'])->toBe([]);
+});
+
+it('asienta a cada jugador según el color elegido', function () {
+    expect(BoardFactory::colorOrder(4))->toBe(['yellow', 'blue', 'red', 'green'])
+        ->and(BoardFactory::colorOrder(6))->toBe(['yellow', 'blue', 'red', 'green', 'orange', 'purple'])
+        ->and(BoardFactory::seatAssignments(['red', 'yellow'], 4))->toBe([
+            0 => ['seat' => 2, 'color' => 'red'],
+            1 => ['seat' => 0, 'color' => 'yellow'],
+        ]);
+
+    $game = makeGame();
+    $token = newToken();
+    addPlayer($game, 'Ana', 'red', $token, host: true);
+    addPlayer($game, 'Beto', 'yellow', newToken());
+    $this->withUnencryptedCookie(PlayerSession::COOKIE_NAME, json_encode([$game->code => $token], JSON_THROW_ON_ERROR));
+
+    $this->post("/rooms/{$game->code}/start")->assertRedirect();
+
+    $game->refresh();
+
+    expect($game->players()->where('color', 'yellow')->first()->seat)->toBe(0)
+        ->and($game->players()->where('color', 'red')->first()->seat)->toBe(2)
+        // El host conserva el primer turno aunque su asiento sea el 2.
+        ->and($game->state['currentPlayerId'])->toBe($game->host_player_id);
+});
+
+it('muestra el color canónico del brazo vacío en la previsualización', function () {
+    $game = makeGame();
+    $token = newToken();
+    addPlayer($game, 'Ana', 'blue', $token, host: true);
+    addPlayer($game, 'Beto', 'green', newToken());
+    $this->withUnencryptedCookie(PlayerSession::COOKIE_NAME, json_encode([$game->code => $token], JSON_THROW_ON_ERROR));
+
+    $this->get("/rooms/{$game->code}")
+        ->assertInertia(fn ($page) => $page
+            ->component('Rooms/Waiting')
+            ->where('room.board.arms', 4)
+            ->where('room.board.safeCells', [0, 7, 12, 17, 24, 29, 34, 41, 46, 51, 58, 63])
+            ->where('room.board.armsDetail.0.color', 'yellow')
+            ->where('room.board.armsDetail.2.color', 'red'));
 });

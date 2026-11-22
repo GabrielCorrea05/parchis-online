@@ -8,7 +8,6 @@ use App\Application\Game\Exceptions\GameActionRejected;
 use App\Application\Game\Exceptions\StaleVersionException;
 use App\Application\Game\Exceptions\UnauthorizedPlayerException;
 use App\Application\Game\Queries\GetGameSnapshot;
-use App\Domain\Game\Enums\Color;
 use App\Domain\Game\Enums\GameStatus;
 use App\Domain\Game\Exceptions\GameRuleViolation;
 use App\Domain\Game\Services\BoardFactory;
@@ -62,7 +61,7 @@ final class GameService
     }
 
     /**
-     * Inicia la partida, fija el tablero y reparte colores ausentes/duplicados.
+     * Inicia la partida, fija el tablero y asienta a cada jugador según su color.
      *
      * @return array{snapshot: array<string, mixed>, broadcasts: list<object>}
      */
@@ -80,14 +79,16 @@ final class GameService
                 throw new ForbiddenPlayerException('Solo el host puede iniciar la partida.');
             }
 
-            $members = $fresh->players()->orderBy('seat')->get();
+            $members = $fresh->players()->orderBy('id')->get();
             $count = $members->count();
 
             if ($count < config('parchis.min_players') || $count > config('parchis.max_players')) {
                 throw new GameActionRejected('Se necesitan entre 2 y 6 jugadores.');
             }
 
-            $this->fixColors($members);
+            $arms = BoardFactory::armsForPlayers($count);
+            $this->assignSeatsAndColors($members, $arms);
+            $members = $members->sortBy('seat')->values();
 
             $colorsBySeat = [];
             $playersForEngine = [];
@@ -103,7 +104,6 @@ final class GameService
                 ];
             }
 
-            $arms = BoardFactory::armsForPlayers($count);
             $board = BoardFactory::forArms($arms, $colorsBySeat);
             $state = GameEngine::initialState($playersForEngine, (int) $host->id);
             $message = "¡Partida iniciada! Tablero fijado con {$arms} brazos.";
@@ -425,30 +425,32 @@ final class GameService
         return $this->snapshots->handle($game->load('players'), $current)->toArray();
     }
 
-    /** @param  iterable<int, Player>  $members */
-    private function fixColors(iterable $members): void
+    /**
+     * El color elegido fija el brazo: amarillo=5, azul=22, rojo=39, verde=56.
+     * El host sigue empezando porque `GameEngine::initialState` rota el orden
+     * de turnos para ponerlo primero aunque su asiento no sea el 0.
+     *
+     * @param  iterable<int, Player>  $members
+     */
+    private function assignSeatsAndColors(iterable $members, int $arms): void
     {
-        $palette = Color::values();
-        $used = [];
+        $colors = [];
 
         foreach ($members as $member) {
-            $color = (string) $member->color;
+            $colors[] = (string) $member->color;
+        }
 
-            if (Color::isValid($color) && ! isset($used[$color])) {
-                $used[$color] = true;
+        $assignments = BoardFactory::seatAssignments($colors, $arms);
 
-                continue;
+        foreach ($members as $position => $member) {
+            $assignment = $assignments[$position];
+
+            if ((int) $member->seat !== $assignment['seat'] || (string) $member->color !== $assignment['color']) {
+                $member->update([
+                    'seat' => $assignment['seat'],
+                    'color' => $assignment['color'],
+                ]);
             }
-
-            $available = array_values(array_diff($palette, array_keys($used)));
-
-            if ($available === []) {
-                throw new GameActionRejected('No quedan colores libres para los jugadores.');
-            }
-
-            $color = $available[array_rand($available)];
-            $member->update(['color' => $color]);
-            $used[$color] = true;
         }
     }
 

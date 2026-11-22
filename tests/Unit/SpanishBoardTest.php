@@ -88,3 +88,18 @@ it('sitúa la salida, la casilla 68 y el pasillo en la cruz clásica', function 
         expect($point($cell($board['startIndices'][$arm])))->toBe($expected);
     }
 });
+
+it('mantiene las 12 seguras y el color de cada salida con brazos vacíos', function () {
+    // El rojo fija el brazo 2 (salida 39); los demás brazos quedan vacíos.
+    $board = BoardFactory::forArms(4, [2 => 'red']);
+
+    expect($board['safeCells'])->toBe([0, 7, 12, 17, 24, 29, 34, 41, 46, 51, 58, 63])
+        ->and(array_column($board['armsDetail'], 'color'))
+        ->toBe(['yellow', 'blue', 'red', 'green'])
+        ->and(array_column($board['armsDetail'], 'occupied'))
+        ->toBe([false, false, true, false])
+        ->and(array_filter($board['cells'], fn (array $cell): bool => ! isset($cell['label'])))
+        ->toHaveCount(0)
+        ->and(array_map(fn (array $cell): int => $cell['label'], $board['cells']))
+        ->toBe([...range(5, 68), 1, 2, 3, 4]);
+});

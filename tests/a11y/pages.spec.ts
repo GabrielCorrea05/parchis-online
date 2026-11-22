@@ -173,7 +173,19 @@ describe('comprobaciones específicas de accesibilidad', () => {
         expect(board.cellsPerArm).toBe(17);
         expect(board.homeLength).toBe(7);
         expect(board.startIndices).toEqual([0, 17, 34, 51]);
-        expect(board.safeCells).toHaveLength(6);
+        expect(board.safeCells).toHaveLength(12);
+    });
+
+    it('numera todas las casillas sin girar el texto', () => {
+        const wrapper = render(Board, { snapshot });
+        const labels = wrapper
+            .findAll('svg text')
+            .filter((node) => /^\d+$/.test(node.text()));
+
+        expect(labels.length).toBeGreaterThanOrEqual(3);
+        expect(
+            labels.every((node) => node.attributes('transform') === undefined),
+        ).toBe(true);
     });
 });
 

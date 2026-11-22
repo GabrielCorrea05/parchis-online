@@ -17,12 +17,23 @@ import PlayerBadge from '@/components/PlayerBadge.vue';
 import PlayerList from '@/components/PlayerList.vue';
 import { GameApiError, getSnapshot, movePiece, roll } from '@/lib/gameApi';
 import { configureGameEcho } from '@/lib/echo';
-import { playerToken, TOKEN_HEADER } from '@/lib/playerSession';
+import {
+    playerToken,
+    rememberPlayerToken,
+    TOKEN_HEADER,
+} from '@/lib/playerSession';
 import { playerLabel } from '@/lib/playerStyle';
 import { useSound } from '@/lib/sound';
 import type { GameEventPayload, GamePiece, GameSnapshot } from '@/types';
 
-const props = defineProps<{ snapshot: GameSnapshot }>();
+const props = defineProps<{
+    snapshot: GameSnapshot;
+    playerToken?: string | null;
+}>();
+
+if (props.playerToken) {
+    rememberPlayerToken(props.snapshot.code, props.playerToken);
+}
 
 configureGameEcho({
     [TOKEN_HEADER]: playerToken(props.snapshot.code) ?? '',

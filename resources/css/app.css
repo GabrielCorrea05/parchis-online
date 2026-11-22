@@ -376,19 +376,28 @@
     }
 
     .board-frame {
-        overflow: hidden;
+        overflow-x: auto;
+        overflow-y: hidden;
         border: 1px solid var(--c-line);
         border-radius: var(--radius-lg);
         background: var(--board-bg);
         box-shadow: var(--shadow-lg);
     }
 
+    /* En móvil el tablero mantiene un ancho legible y se desplaza en horizontal. */
     .board-svg {
         display: block;
         width: 100%;
+        min-width: 640px;
         height: auto;
-        max-height: 78vh;
         margin-inline: auto;
+    }
+
+    @media (min-width: 768px) {
+        .board-svg {
+            min-width: 0;
+            max-width: min(100%, 78vh);
+        }
     }
 
     .game-piece {

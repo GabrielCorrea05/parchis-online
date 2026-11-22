@@ -15,11 +15,70 @@ final class BoardFactory
     public static function armsForPlayers(int $players): int
     {
         return match (true) {
-            $players >= 2 && $players <= 3 => 3,
-            $players === 4 => 4,
+            $players >= 2 && $players <= 4 => 4,
             $players >= 5 && $players <= 6 => 6,
             default => throw new InvalidArgumentException("Número de jugadores no soportado: {$players}"),
         };
+    }
+
+    /**
+     * Colores canónicos de salida: amarillo=5, azul=22, rojo=39, verde=56
+     * (y cian/violeta en los brazos quinto y sexto del tablero de estrella).
+     *
+     * @return list<string>
+     */
+    public static function colorOrder(int $arms): array
+    {
+        if (! in_array($arms, [4, 6], true)) {
+            throw new InvalidArgumentException("Número de brazos no soportado: {$arms}");
+        }
+
+        $order = config('parchis.color_order');
+
+        if (! is_array($order)) {
+            throw new InvalidArgumentException('Falta parchis.color_order en la configuración.');
+        }
+
+        return array_values(array_slice($order, 0, $arms));
+    }
+
+    /**
+     * Asigna asientos de forma determinista según el color elegido.
+     * Si un color no existe en este tablero, se le da el primer asiento libre.
+     *
+     * @param  iterable<string>  $colors  Colores en orden de llegada.
+     * @return array<int, array{seat: int, color: string}> Índice de llegada => asiento y color final.
+     */
+    public static function seatAssignments(iterable $colors, int $arms): array
+    {
+        $order = self::colorOrder($arms);
+        $used = [];
+        $assignments = [];
+
+        foreach ($colors as $position => $color) {
+            $color = (string) $color;
+            $preferred = array_search($color, $order, true);
+
+            if ($preferred !== false && ! isset($used[$preferred])) {
+                $seat = $preferred;
+            } else {
+                $free = array_values(array_diff(range(0, $arms - 1), array_keys($used)));
+
+                if ($free === []) {
+                    throw new InvalidArgumentException('No quedan asientos libres en el tablero.');
+                }
+
+                $seat = $free[0];
+            }
+
+            $used[$seat] = true;
+            $assignments[$position] = [
+                'seat' => $seat,
+                'color' => $order[$seat],
+            ];
+        }
+
+        return $assignments;
     }
 
     /**
@@ -48,11 +107,13 @@ final class BoardFactory
         $crossOffsets = $boards[$arms]['cross_arm_offsets'] ?? [];
         $gridStep = (float) config('parchis.view_box') / 21;
         $palette = config('parchis.colors');
+        $colorOrder = self::colorOrder($arms);
+        $allArmsSafe = (bool) ($boards[$arms]['all_arms_safe'] ?? false);
 
         $armsDetail = [];
         for ($arm = 0; $arm < $arms; $arm++) {
             $angle = self::angleForArm($arm, $arms, $geometry);
-            $color = $colors[$arm] ?? array_key_first($palette);
+            $color = $colors[$arm] ?? $colorOrder[$arm];
             $base = $geometry === 'cross'
                 ? self::gridPoint($center, self::rotateOffset([-9, 9], $arm), $gridStep)
                 : self::point($center, $angle, $outer + 70);
@@ -132,6 +193,9 @@ final class BoardFactory
             ];
         }
 
+        $occupiedArms = array_map('intval', array_keys($colors));
+        sort($occupiedArms);
+
         $cells = [];
         for ($index = 0; $index < $totalCells; $index++) {
             $arm = intdiv($index, $cellsPerArm);
@@ -167,7 +231,9 @@ final class BoardFactory
 
         $safeCells = [];
         foreach ($armsDetail as $arm) {
-            if (! $arm['occupied']) {
+            // En la cruz clásica las 12 seguras existen aunque el brazo esté
+            // vacío: son una propiedad del tablero, no del jugador.
+            if (! $allArmsSafe && ! $arm['occupied']) {
                 continue;
             }
 
@@ -195,7 +261,7 @@ final class BoardFactory
             'bases' => $bases,
             'homes' => $homes,
             'cells' => $cells,
-            'occupiedArms' => array_keys($colors),
+            'occupiedArms' => $occupiedArms,
             'safeCells' => $safeCells,
             'startIndices' => array_map('intval', array_column($armsDetail, 'salidaIndex')),
         ];

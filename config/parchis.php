@@ -37,14 +37,18 @@ return [
     'cell_size' => 16,
     'home_length' => 6,
 
+    // Salida clásica de cada brazo. El color elegido fija el asiento.
+    'color_order' => ['yellow', 'blue', 'red', 'green', 'orange', 'purple'],
+
     'boards' => [
-        3 => ['cells_per_arm' => 12, 'geometry' => 'triangle'],
         4 => [
             'cells_per_arm' => 17,
             'geometry' => 'cross',
             'cell_size' => 34,
             'home_length' => 7,
-            // 3 seguras por brazo: salida + dos estrellas (12 en total).
+            // 3 seguras por brazo: salida + dos estrellas (12 en total),
+            // incluso cuando un brazo no tiene jugador.
+            'all_arms_safe' => true,
             'safe_offsets' => [0, 7, 12],
             // El índice interno 0 es la casilla clásica 5; así s_a = a*17.
             'label_offset' => 4,

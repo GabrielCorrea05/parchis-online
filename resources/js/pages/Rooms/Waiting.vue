@@ -9,13 +9,23 @@ import { configureGameEcho } from '@/lib/echo';
 import {
     forgetPlayerToken,
     playerToken,
+    rememberPlayerToken,
     TOKEN_HEADER,
 } from '@/lib/playerSession';
 import { followRematch } from '@/lib/rematch';
 import { personaliseRoom } from '@/lib/room';
 import type { Room } from '@/types';
 
-const props = defineProps<{ room: Room }>();
+const props = defineProps<{
+    room: Room;
+    playerToken?: string | null;
+}>();
+
+// El servidor entrega el token de esta sala en la primera carga. Así cada
+// pestaña siembra su sessionStorage aunque otra haya sobrescrito la cookie.
+if (props.playerToken) {
+    rememberPlayerToken(props.room.code, props.playerToken);
+}
 
 configureGameEcho({
     [TOKEN_HEADER]: playerToken(props.room.code) ?? '',
@@ -114,12 +124,17 @@ onMounted(() => {
 
 onBeforeUnmount(() => window.clearInterval(roomPoll));
 
+const actionHeaders = () => ({
+    [TOKEN_HEADER]: playerToken(props.room.code) ?? '',
+});
+
 const startGame = () => {
     starting.value = true;
     router.post(
         `/rooms/${props.room.code}/start`,
         {},
         {
+            headers: actionHeaders(),
             preserveScroll: true,
             onFinish: () => (starting.value = false),
         },
@@ -131,6 +146,7 @@ const leaveRoom = () => {
         `/rooms/${props.room.code}/leave`,
         {},
         {
+            headers: actionHeaders(),
             onSuccess: () => forgetPlayerToken(props.room.code),
         },
     );
@@ -266,8 +282,9 @@ const copyCode = async () => {
                     </div>
                     <BoardPreview :board="room.board" />
                     <p class="hint mt-3 text-center">
-                        Los brazos sin jugador se dibujan igual, pero no tienen
-                        fichas ni casillas seguras.
+                        Los brazos sin jugador se dibujan igual, con sus 3
+                        casillas seguras y sin fichas. Con 5 o 6 jugadores el
+                        tablero pasa a 6 brazos en estrella.
                     </p>
                 </section>
             </div>

@@ -18,7 +18,7 @@ const hintId = useId();
 
 const form = useForm({
     nickname: '',
-    color: 'red',
+    color: props.colors[0]?.name ?? 'yellow',
     code: props.code,
 });
 

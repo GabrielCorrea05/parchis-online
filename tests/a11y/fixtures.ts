@@ -16,7 +16,7 @@ export const board: Record<string, unknown> = {
     center: { x: 400, y: 400 },
     cellSize: 34,
     occupiedArms: [0, 1],
-    safeCells: [0, 7, 12, 17, 24, 29],
+    safeCells: [0, 7, 12, 17, 24, 29, 34, 41, 46, 51, 58, 63],
     startIndices: [0, 17, 34, 51],
     cells: [
         {

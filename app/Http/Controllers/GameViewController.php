@@ -32,9 +32,13 @@ final class GameViewController extends Controller
             return Inertia::render('Games/Result', [
                 'result' => $this->results->handle($game),
                 'snapshot' => $snapshot,
+                'playerToken' => PlayerSession::tokenFor($game->code),
             ]);
         }
 
-        return Inertia::render('Games/Board', ['snapshot' => $snapshot]);
+        return Inertia::render('Games/Board', [
+            'snapshot' => $snapshot,
+            'playerToken' => PlayerSession::tokenFor($game->code),
+        ]);
     }
 }

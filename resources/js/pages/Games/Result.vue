@@ -6,7 +6,11 @@ import AppShell from '@/components/AppShell.vue';
 import PlayerBadge from '@/components/PlayerBadge.vue';
 import { configureGameEcho } from '@/lib/echo';
 import { createRematch } from '@/lib/gameApi';
-import { playerToken, TOKEN_HEADER } from '@/lib/playerSession';
+import {
+    playerToken,
+    rememberPlayerToken,
+    TOKEN_HEADER,
+} from '@/lib/playerSession';
 import { playerLabel } from '@/lib/playerStyle';
 import { followRematch } from '@/lib/rematch';
 import type {
@@ -31,11 +35,17 @@ const props = defineProps<{
         message?: string;
     };
     snapshot: GameSnapshot;
+    playerToken?: string | null;
 }>();
 
+const gameCode = props.result.game_code ?? props.snapshot.code;
+
+if (props.playerToken) {
+    rememberPlayerToken(gameCode, props.playerToken);
+}
+
 configureGameEcho({
-    [TOKEN_HEADER]:
-        playerToken(props.result.game_code ?? props.snapshot.code) ?? '',
+    [TOKEN_HEADER]: playerToken(gameCode) ?? '',
 });
 
 const busy = ref(false);

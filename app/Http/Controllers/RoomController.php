@@ -7,6 +7,7 @@ use App\Application\Game\Queries\GetRoomView;
 use App\Application\Game\Services\GameService;
 use App\Application\Game\Services\RoomCodeGenerator;
 use App\Domain\Game\Enums\GameStatus;
+use App\Domain\Game\Services\BoardFactory;
 use App\Http\Requests\CreateRoomRequest;
 use App\Http\Requests\JoinRoomRequest;
 use App\Infrastructure\Broadcasting\GameStarted;
@@ -33,13 +34,19 @@ final class RoomController extends Controller
     public function create(): Response
     {
         return Inertia::render('Welcome', [
-            'colors' => $this->colorOptions(),
+            'colors' => $this->colorOptions(BoardFactory::armsForPlayers(2)),
             'maxPlayers' => config('parchis.max_players'),
         ]);
     }
 
     public function store(CreateRoomRequest $request): RedirectResponse
     {
+        $arms = BoardFactory::armsForPlayers(2);
+
+        if (! $this->isColorForArms((string) $request->validated('color'), $arms)) {
+            return back()->withErrors(['color' => 'En el tablero de 4 brazos elige amarillo, azul, rojo o verde.']);
+        }
+
         $code = $this->generateCode();
         $token = PlayerSession::generateToken();
 
@@ -72,15 +79,18 @@ final class RoomController extends Controller
         $player = PlayerSession::playerFor($game);
 
         if ($player === null) {
+            $prospectiveArms = BoardFactory::armsForPlayers(min($game->players()->count() + 1, config('parchis.max_players')));
+
             return Inertia::render('Rooms/Join', [
                 'code' => $game->code,
-                'colors' => $this->colorOptions(),
+                'colors' => $this->colorOptions($prospectiveArms),
                 'maxPlayers' => config('parchis.max_players'),
             ]);
         }
 
         return Inertia::render('Rooms/Waiting', [
             'room' => $this->roomView($game, $player),
+            'playerToken' => PlayerSession::tokenFor($game->code),
         ]);
     }
 
@@ -95,6 +105,12 @@ final class RoomController extends Controller
 
         if ($game->players()->count() >= config('parchis.max_players')) {
             return back()->withErrors(['code' => 'La sala está llena.']);
+        }
+
+        $prospectiveArms = BoardFactory::armsForPlayers($game->players()->count() + 1);
+
+        if (! $this->isColorForArms((string) $request->validated('color'), $prospectiveArms)) {
+            return back()->withErrors(['color' => 'Con este número de jugadores esa salida no existe en el tablero.']);
         }
 
         $player = DB::transaction(function () use ($game, $request, $token): Player {
@@ -185,23 +201,29 @@ final class RoomController extends Controller
         $player = PlayerSession::playerFor($game);
 
         if ($player === null || ! $player->isHostOf($game)) {
-            abort(403, 'Solo el host puede iniciar la partida.');
+            // Nunca abort(403) desde una ruta solo POST: Inertia seguiría la
+            // respuesta como GET y el navegador acabaría en una 404.
+            return to_route('rooms.show', $game->code)
+                ->withErrors(['start' => 'Solo el host puede iniciar la partida.']);
         }
 
         if (! $game->isWaiting()) {
-            return back()->withErrors(['start' => 'La partida ya está iniciada.']);
+            return to_route('rooms.show', $game->code)
+                ->withErrors(['start' => 'La partida ya está iniciada.']);
         }
 
         $playerCount = $game->players()->count();
 
         if ($playerCount < config('parchis.min_players') || $playerCount > config('parchis.max_players')) {
-            return back()->withErrors(['start' => 'Se necesitan entre 2 y 6 jugadores.']);
+            return to_route('rooms.show', $game->code)
+                ->withErrors(['start' => 'Se necesitan entre 2 y 6 jugadores.']);
         }
 
         try {
             $outcome = $this->games->start($game, $player);
         } catch (GameActionRejected $exception) {
-            return back()->withErrors(['start' => $exception->getMessage()]);
+            return to_route('rooms.show', $game->code)
+                ->withErrors(['start' => $exception->getMessage()]);
         }
 
         $game->refresh();
@@ -216,7 +238,7 @@ final class RoomController extends Controller
 
         $this->dispatchBroadcasts($outcome['broadcasts']);
 
-        return back();
+        return to_route('rooms.show', $game->code);
     }
 
     private function findGame(string $code): Game
@@ -283,14 +305,22 @@ final class RoomController extends Controller
         return $this->codes->generate();
     }
 
-    /** @return list<array{name: string, hex: string}> */
-    private function colorOptions(): array
+    private function isColorForArms(string $color, int $arms): bool
     {
-        $colors = config('parchis.colors');
+        return in_array($color, BoardFactory::colorOrder($arms), true);
+    }
+
+    /** @return list<array{name: string, hex: string}> */
+    private function colorOptions(int $arms): array
+    {
+        $palette = config('parchis.colors');
         $options = [];
 
-        foreach (is_array($colors) ? $colors : [] as $name => $hex) {
-            $options[] = ['name' => (string) $name, 'hex' => (string) $hex];
+        foreach (BoardFactory::colorOrder($arms) as $name) {
+            $options[] = [
+                'name' => $name,
+                'hex' => (string) ($palette[$name] ?? '#64748b'),
+            ];
         }
 
         return $options;

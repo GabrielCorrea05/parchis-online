@@ -16,19 +16,22 @@ en producción.
 
 ## 1. Reglas resumidas
 
-- 2–3 jugadores → tablero de **3 brazos**; 4 → **4 brazos**; 5–6 → **6 brazos en estrella**.
+- 2, 3 o 4 jugadores → **tablero español de 4 brazos** (68 casillas); 5–6 →
+  **6 brazos en estrella**.
 - El tablero se genera con una única fábrica paramétrica (`BoardFactory::forArms()`);
-  los brazos vacíos se dibujan, pero su salida es una casilla normal.
+  los brazos vacíos se dibujan igual y conservan su salida y sus casillas seguras.
+  El color elegido fija el brazo: amarillo 5, azul 22, rojo 39, verde 56.
 - 4 fichas por jugador. `progress = null` es casa; `0..M-1` es anillo;
-  `M..M+5` es columna de casa; `M+6` es meta.
+  `M..M+homeLength-1` es columna de casa; `M+homeLength` es meta
+  (`homeLength = 7` en 4 brazos y `6` en 6).
 - Con **5** se puede sacar una ficha de casa (a `progress = 0`) o mover 5 pasos
   una ficha desplegada. Con cualquier otro valor solo se mueven fichas desplegadas.
 - Entrar en columna **no** exige tirada exacta; llegar a meta **sí**. Pasarse de meta es ilegal.
-- Captura solo al caer, solo en anillo y solo en casilla no segura. Hay 2
-  casillas seguras por brazo ocupado (salida y punto medio).
+- Captura solo al caer, solo en anillo y solo en casilla no segura. En la cruz de
+  4 brazos hay **12 seguras fijas**; en la estrella, 2 por brazo ocupado.
 - Un **6** da turno extra solo si se ejecutó un movimiento legal. El tercer 6
   consecutivo se consume sin mover. Victoria antes que turno extra.
-- Empieza el host; después se sigue el `seat` (orden de llegada), saltando
+- Empieza el host; después se sigue el `seat` (fijado por el color), saltando
   jugadores desconectados. No hay pase voluntario si existe algún movimiento legal.
 - Gana quien coloca sus 4 fichas en meta. No hay barreras, bonus de captura,
   bonus de llegada ni temporizador de turno.
@@ -520,7 +523,7 @@ Marca cada punto con 2–3 pestañas o navegadores distintos:
 - [ ] `GET /` carga sin errores de consola y con HTTPS.
 - [ ] Crear sala; el código de 4 letras se copia y la URL `/rooms/{code}` funciona.
 - [ ] Unirse desde otra pestaña con apodo/color distintos; la lista se actualiza en vivo.
-- [ ] Con 2–3 jugadores la previsualización tiene 3 brazos; con 4, 4; con 5–6, 6 en estrella.
+- [ ] Con 2–4 jugadores la previsualización es la cruz clásica de 4 brazos y 12 seguras; con 5–6, 6 brazos en estrella.
 - [ ] Un jugador que no es host no ve habilitado **Empezar partida**.
 - [ ] Al iniciar, todas las pestañas navegan a `/games/{code}` y el tablero queda fijado.
 - [ ] El jugador activo ve **Tirar dado**; tras tirar, solo sus fichas legales parpadean.
@@ -540,8 +543,8 @@ Marca cada punto con 2–3 pestañas o navegadores distintos:
 
 ### Decisiones cerradas
 
-- Turno inicial del host y después por `seat`; sin aleatorizar.
-- Casillas seguras: salida + punto medio de cada brazo ocupado.
+- Turno inicial del host y después por `seat` (fijado por el color); sin aleatorizar.
+- Casillas seguras: 12 fijas en la cruz de 4 brazos; salida + punto medio de cada brazo ocupado en la estrella.
 - El 5 también mueve fichas desplegadas; sacar sigue siendo opcional.
 - Tercer 6 consumido sin mover; sin pase voluntario.
 - Victoria antes que turno extra; desempate por fichas en meta → `progress` → `seat`.

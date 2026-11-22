@@ -67,8 +67,10 @@ const symbolFill = computed(() =>
         ? 'var(--board-on-player)'
         : 'var(--board-on-cell)',
 );
+// Número en la franja inferior: así convive con la estrella de las seguras
+// y nunca sale girado, incluso en los brazos laterales.
 const labelSize = computed(() => Math.max(9, Math.round(props.size * 0.3)));
-const labelY = computed(() => props.y + props.size * 0.13);
+const labelY = computed(() => props.y + props.size * 0.33);
 </script>
 
 <template>
@@ -115,13 +117,13 @@ const labelY = computed(() => props.y + props.size * 0.13);
             pointer-events="none"
         />
         <polygon
-            v-if="safe && kind !== 'salida'"
+            v-if="safe"
             :points="starPoints"
             :fill="symbolFill"
             pointer-events="none"
         />
         <text
-            v-if="label !== undefined && kind === 'salida'"
+            v-if="label !== undefined"
             :x="x"
             :y="labelY"
             text-anchor="middle"

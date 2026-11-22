@@ -5,7 +5,7 @@ import AppShell from '@/components/AppShell.vue';
 import ColorPicker from '@/components/ColorPicker.vue';
 import type { ColorOption } from '@/types';
 
-defineProps<{
+const props = defineProps<{
     colors: ColorOption[];
     maxPlayers: number;
 }>();
@@ -18,7 +18,7 @@ const createHintId = useId();
 
 const form = useForm({
     nickname: '',
-    color: 'red',
+    color: props.colors[0]?.name ?? 'yellow',
     code: '',
 });
 

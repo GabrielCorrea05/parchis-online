@@ -32,7 +32,7 @@ function raGame(array $progress, bool $finished = true, int $version = 3): array
         $colorsBySeat[$seat] = $colors[$seat];
     }
 
-    $board = BoardFactory::forArms(3, $colorsBySeat);
+    $board = BoardFactory::forArms(4, $colorsBySeat);
     $goal = $board['arms'] * $board['cellsPerArm'] + $board['homeLength'];
 
     $enginePlayers = [];
@@ -66,7 +66,7 @@ function raGame(array $progress, bool $finished = true, int $version = 3): array
         'code' => 'RA'.Str::upper(Str::random(2)),
         'status' => $finished ? GameStatus::Finished : GameStatus::InProgress,
         'version' => $version,
-        'arms' => 3,
+        'arms' => 4,
         'board_config' => $board,
         'state' => $state,
         'started_at' => now()->subMinutes(15),
@@ -119,7 +119,7 @@ function raPersistResult(Game $game, array $state): array
 }
 
 it('devuelve el resultado final con clasificación, capturas y alias en español', function () {
-    $goal = 42;
+    $goal = 75;
     $data = raGame([
         [$goal, $goal, $goal, $goal],           // 4 en meta
         [$goal, $goal, 20, 15],                 // 2 en meta, progreso 35
@@ -133,7 +133,7 @@ it('devuelve el resultado final con clasificación, capturas y alias en español
 
     expect($response['game_code'])->toBe($data['game']->code)
         ->and($response['status'])->toBe('finished')
-        ->and($response['board_arms'])->toBe(3)
+        ->and($response['board_arms'])->toBe(4)
         ->and($response['winner'])->toMatchArray(['id' => 1, 'nickname' => 'Ana', 'color' => 'red'])
         ->and($response['ranking'])->toHaveCount(3)
         ->and($response['ranking'][0]['playerId'])->toBe(1)
@@ -154,7 +154,7 @@ it('devuelve el resultado final con clasificación, capturas y alias en español
 });
 
 it('desempata por seat cuando coinciden fichas en meta y progreso', function () {
-    $goal = 42;
+    $goal = 75;
     $data = raGame([
         [$goal, $goal, $goal, $goal],
         [$goal, $goal, 20, 20],
@@ -173,7 +173,7 @@ it('no revela ranking ni posiciones mientras la partida está en curso', functio
     $expected = [
         'game_code' => $data['game']->code,
         'status' => 'en_curso',
-        'board_arms' => 3,
+        'board_arms' => 4,
         'winner' => null,
         'ranking' => [],
         'message' => 'La partida aún está en curso.',
@@ -191,12 +191,12 @@ it('no revela ranking ni posiciones mientras la partida está en curso', functio
 });
 
 it('valida token y existencia de la partida en el resultado', function () {
-    $data = raGame([[42, 42, 42, 42], [1, 2, 3, 4]]);
+    $data = raGame([[75, 75, 75, 75], [1, 2, 3, 4]]);
     $url = "/api/games/{$data['game']->code}/result";
 
     $this->getJson($url)->assertStatus(401);
 
-    $other = raGame([[42, 42, 42, 42], [1, 2, 3, 4]]);
+    $other = raGame([[75, 75, 75, 75], [1, 2, 3, 4]]);
     $this->withHeader(PlayerSession::TOKEN_HEADER, $other['tokens'][1])
         ->getJson($url)
         ->assertStatus(403);
@@ -210,7 +210,7 @@ it('guarda game_results y emite GameFinished cuando se gana', function () {
     Event::fake([GameFinished::class]);
     app()->bind(DiceRoller::class, fn () => new FakeDiceRoller([1]));
 
-    $data = raGame([[42, 42, 42, 41], [1, 2, 3, 4]], false);
+    $data = raGame([[75, 75, 75, 74], [1, 2, 3, 4]], false);
 
     $this->withHeader(PlayerSession::TOKEN_HEADER, $data['tokens'][1])
         ->postJson("/api/games/{$data['game']->code}/roll")
@@ -261,7 +261,7 @@ it('entrega el snapshot completo al recargar la partida', function () {
             ->where('snapshot.youPlayerId', 1)
             ->where('snapshot.currentPlayerId', 1)
             ->where('snapshot.version', 3)
-            ->where('snapshot.board.arms', 3)
+            ->where('snapshot.board.arms', 4)
             ->where('snapshot.state.currentPlayerId', 1));
 
     $this->withHeader(PlayerSession::TOKEN_HEADER, $data['tokens'][1])
@@ -272,7 +272,7 @@ it('entrega el snapshot completo al recargar la partida', function () {
 it('publica el historial publico y el detalle de la partida terminada', function () {
     config()->set('inertia.testing.ensure_pages_exist', false);
 
-    $data = raGame([[42, 42, 42, 42], [1, 2, 3, 4]]);
+    $data = raGame([[75, 75, 75, 75], [1, 2, 3, 4]]);
 
     $this->get('/partidas')
         ->assertOk()

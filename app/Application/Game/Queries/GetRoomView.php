@@ -24,9 +24,16 @@ final class GetRoomView
         $playerCount = count($players);
         $previewArms = $game->arms ?? BoardFactory::armsForPlayers(max(2, $playerCount));
 
-        $colors = [];
+        // La previsualización usa el mismo mapa color→asiento que el inicio
+        // de partida, para que el jugador vea ya su salida definitiva.
+        $colorsByArrival = [];
         foreach ($game->players as $player) {
-            $colors[$player->seat] = $player->color;
+            $colorsByArrival[] = (string) $player->color;
+        }
+
+        $colors = [];
+        foreach (BoardFactory::seatAssignments($colorsByArrival, $previewArms) as $assignment) {
+            $colors[$assignment['seat']] = $assignment['color'];
         }
 
         $board = $game->board_config ?? BoardFactory::forArms($previewArms, $colors);

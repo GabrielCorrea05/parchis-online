@@ -36,7 +36,7 @@ function gfStartedGame(array $dice = [], int $version = 5): array
     }
 
     $colors = ['red', 'blue'];
-    $board = BoardFactory::forArms(3, [0 => 'red', 1 => 'blue']);
+    $board = BoardFactory::forArms(4, [0 => 'red', 1 => 'blue']);
 
     $enginePlayers = [
         1 => ['id' => 1, 'nickname' => 'Ana', 'color' => 'red', 'seat' => 0, 'isConnected' => true],
@@ -48,7 +48,7 @@ function gfStartedGame(array $dice = [], int $version = 5): array
         'code' => 'GF'.Str::upper(Str::random(2)),
         'status' => GameStatus::InProgress,
         'version' => $version,
-        'arms' => 3,
+        'arms' => 4,
         'board_config' => $board,
         'state' => $state,
         'started_at' => now()->subMinutes(5),
@@ -281,7 +281,7 @@ it('clona la sala en la revancha y devuelve el mismo token a cada jugador', func
     GameResult::create([
         'game_id' => $game->id,
         'winner_player_id' => 1,
-        'board_arms' => 3,
+        'board_arms' => 4,
         'duration_seconds' => 300,
         'turns' => 20,
         'total_rolls' => 20,

@@ -1,1 +1,0 @@
-import{W as e,i as t}from"./app-B2YyDAVj.js";import{r as n}from"./gameApi-CGtQf4oP.js";async function r(r,i){let a=await n(r);t(a.code||i,a.playerToken),e.visit(`/rooms/${a.code||i}`)}export{r as t};

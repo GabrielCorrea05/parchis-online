@@ -119,12 +119,10 @@ const safeCells = computed(() => new Set<number>(props.board.safeCells ?? []));
             :key="`base-${arm.index}`"
             pointer-events="none"
         >
-            <rect
-                :x="arm.base.x - 30"
-                :y="arm.base.y - 30"
-                width="60"
-                height="60"
-                rx="12"
+            <circle
+                :cx="arm.base.x"
+                :cy="arm.base.y"
+                r="38"
                 fill="var(--board-base)"
                 :stroke="boardPlayerColor(arm.color)"
                 :stroke-width="arm.occupied ? 3 : 1.5"

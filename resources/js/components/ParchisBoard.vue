@@ -4,7 +4,7 @@ import CellShape from '@/components/CellShape.vue';
 import PieceShape from '@/components/PieceShape.vue';
 import { armWedge, rosettePoints } from '@/lib/boardDecor';
 import { boardPlayerColor } from '@/lib/playerStyle';
-import type { GameBoard, GamePiece, Point } from '@/types';
+import type { GameBoard, GameBoardHome, GamePiece, Point } from '@/types';
 
 const props = withDefaults(
     defineProps<{
@@ -61,23 +61,21 @@ const rosette = computed(() =>
     rosettePoints(props.board.center, Math.max(42, cellSize.value * 1.8)),
 );
 
-function baseBox(slots: Point[]): {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-} {
+function baseCircle(slots: Point[]): { cx: number; cy: number; r: number } {
     const xs = slots.map((slot) => slot.x);
     const ys = slots.map((slot) => slot.y);
     const pad = cellSize.value * 0.62;
-    const left = Math.min(...xs) - pad;
-    const top = Math.min(...ys) - pad;
 
     return {
-        x: left,
-        y: top,
-        width: Math.max(...xs) - Math.min(...xs) + pad * 2,
-        height: Math.max(...ys) - Math.min(...ys) + pad * 2,
+        cx: (Math.min(...xs) + Math.max(...xs)) / 2,
+        cy: (Math.min(...ys) + Math.max(...ys)) / 2,
+        r:
+            Math.max(
+                Math.max(...xs) - Math.min(...xs),
+                Math.max(...ys) - Math.min(...ys),
+            ) /
+                2 +
+            pad,
     };
 }
 
@@ -95,6 +93,34 @@ function homePoint(piece: GamePiece): { x: number; y: number } | null {
 function goalPoint(piece: GamePiece): { x: number; y: number } | null {
     const slot = piece.slot - 1;
     return props.board.homes[piece.seat]?.goals[slot] ?? null;
+}
+
+/** Triángulo de meta apuntando al centro, derivado del ángulo del brazo. */
+function goalTriangle(home: GameBoardHome, goal: Point): string {
+    const angle = props.board.armsDetail[home.arm]?.angle ?? -90;
+    const radians = (angle * Math.PI) / 180;
+    const dx = Math.cos(radians);
+    const dy = Math.sin(radians);
+    const px = -dy;
+    const py = dx;
+    const size = cellSize.value * 0.62;
+
+    const apex = {
+        x: goal.x - dx * size * 0.62,
+        y: goal.y - dy * size * 0.62,
+    };
+    const left = {
+        x: goal.x + dx * size * 0.38 + px * size * 0.55,
+        y: goal.y + dy * size * 0.38 + py * size * 0.55,
+    };
+    const right = {
+        x: goal.x + dx * size * 0.38 - px * size * 0.55,
+        y: goal.y + dy * size * 0.38 - py * size * 0.55,
+    };
+
+    return [apex, left, right]
+        .map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`)
+        .join(' ');
 }
 
 function basePoint(piece: GamePiece): { x: number; y: number } | null {
@@ -278,9 +304,8 @@ function onKeydown(event: KeyboardEvent): void {
         </g>
 
         <g v-for="base in board.bases" :key="`base-${base.arm}`">
-            <rect
-                v-bind="baseBox(base.slots)"
-                rx="14"
+            <circle
+                v-bind="baseCircle(base.slots)"
                 fill="var(--board-base)"
                 :stroke="boardPlayerColor(base.color)"
                 :stroke-width="base.occupied ? 3 : 1.5"
@@ -322,17 +347,14 @@ function onKeydown(event: KeyboardEvent): void {
                 :opacity="home.occupied ? (i % 2 === 0 ? 0.34 : 0.2) : 0.1"
                 stroke="var(--board-line)"
             />
-            <rect
+            <polygon
                 v-for="(goal, i) in home.goals"
                 :key="`goal-${i}`"
-                :x="goal.x - cellSize * 0.42"
-                :y="goal.y - cellSize * 0.42"
-                :width="cellSize * 0.84"
-                :height="cellSize * 0.84"
-                rx="4"
+                :points="goalTriangle(home, goal)"
                 fill="var(--board-cell)"
                 :stroke="boardPlayerColor(home.color)"
                 stroke-width="2.5"
+                stroke-linejoin="round"
             />
         </g>
 

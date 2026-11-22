@@ -30,7 +30,7 @@ function putPiece(array &$state, int $playerId, int $slot, ?int $progress): stri
 }
 
 it('saca una ficha de casa solo con un 5', function () {
-    $board = boardFor(3);
+    $board = boardFor(4);
     $state = twoPlayerState($board);
     $engine = new GameEngine($board);
 
@@ -52,14 +52,14 @@ it('saca una ficha de casa solo con un 5', function () {
 });
 
 it('captura al caer sobre una ficha rival en casilla no segura', function () {
-    $board = boardFor(3);
+    $board = boardFor(4);
     $state = twoPlayerState($board);
-    putPiece($state, 2, 0, 0); // seat 1, progress 0 -> celda 12 (segura)
-    putPiece($state, 2, 1, 1); // seat 1, progress 1 -> celda 13
-    putPiece($state, 1, 0, 13); // seat 0, progress 13 -> celda 13
+    putPiece($state, 2, 0, 0); // seat 1, progress 0 -> celda 17 (segura)
+    putPiece($state, 2, 1, 1); // seat 1, progress 1 -> celda 18
+    putPiece($state, 1, 0, 18); // seat 0, progress 18 -> celda 18 (no segura)
     putPiece($state, 1, 1, 5); // ficha propia para dar legalidad extra
 
-    // El host es seat 0; cambiamos el turno a seat 1 para mover hacia la 13.
+    // El host es seat 0; cambiamos el turno a seat 1 para mover hacia la 18.
     $state['currentPlayerId'] = 2;
     $engine = new GameEngine($board);
 
@@ -73,24 +73,23 @@ it('captura al caer sobre una ficha rival en casilla no segura', function () {
 });
 
 it('no captura en casilla segura', function () {
-    $board = boardFor(3);
+    $board = boardFor(4);
     $state = twoPlayerState($board);
-    putPiece($state, 2, 0, 5); // seat 1 -> celda 17
-    putPiece($state, 1, 0, 16); // seat 0 -> celda 16
-    putPiece($state, 1, 1, 18); // rival en destino 18 (segura)
+    putPiece($state, 2, 0, 6); // seat 1 -> celda 23
+    putPiece($state, 1, 0, 24); // rival en la celda 24 (segura del brazo 1)
     $state['currentPlayerId'] = 2;
     $engine = new GameEngine($board);
 
     $rolled = $engine->roll(1, $state);
     $moved = $engine->move('2-0', $rolled['state']);
 
-    expect($moved['state']['pieces']['1-1']['progress'])->toBe(18)
+    expect($moved['state']['pieces']['1-0']['progress'])->toBe(24)
         ->and($moved['state']['captures']['2'])->toBe(0)
         ->and(collect($moved['events'])->pluck('type'))->not->toContain('capture');
 });
 
 it('concede turno extra con un 6 usado en un movimiento legal', function () {
-    $board = boardFor(3);
+    $board = boardFor(4);
     $state = twoPlayerState($board);
     putPiece($state, 1, 0, 0);
     $engine = new GameEngine($board);
@@ -105,7 +104,7 @@ it('concede turno extra con un 6 usado en un movimiento legal', function () {
 });
 
 it('pierde el turno con el tercer 6 consecutivo', function () {
-    $board = boardFor(3);
+    $board = boardFor(4);
     $state = twoPlayerState($board);
     putPiece($state, 1, 0, 0);
     $engine = new GameEngine($board);
@@ -126,7 +125,7 @@ it('pierde el turno con el tercer 6 consecutivo', function () {
 });
 
 it('salta el turno de un jugador desconectado', function () {
-    $board = boardFor(3);
+    $board = boardFor(4);
     $state = twoPlayerState($board);
     $state['players'][1]['isConnected'] = false;
     putPiece($state, 1, 0, 0);
@@ -139,7 +138,7 @@ it('salta el turno de un jugador desconectado', function () {
 });
 
 it('no permite pasarse de la meta', function () {
-    $board = boardFor(3);
+    $board = boardFor(4);
     $goal = $board['arms'] * $board['cellsPerArm'] + $board['homeLength'];
     $state = twoPlayerState($board);
     putPiece($state, 1, 0, $goal - 1);
@@ -152,7 +151,7 @@ it('no permite pasarse de la meta', function () {
 });
 
 it('termina la partida al meter la cuarta ficha en la meta', function () {
-    $board = boardFor(3);
+    $board = boardFor(4);
     $goal = $board['arms'] * $board['cellsPerArm'] + $board['homeLength'];
     $state = twoPlayerState($board);
     putPiece($state, 1, 0, $goal);
@@ -171,8 +170,8 @@ it('termina la partida al meter la cuarta ficha en la meta', function () {
         ->and(collect($moved['events'])->pluck('type'))->toContain('game_finished');
 });
 
-it('genera tableros parametrizados de 3, 4 y 6 brazos con casas y pasillos', function () {
-    foreach ([3, 4, 6] as $arms) {
+it('genera tableros parametrizados de 4 y 6 brazos con casas y pasillos', function () {
+    foreach ([4, 6] as $arms) {
         $board = boardFor($arms);
         $expectedCells = $arms * config("parchis.boards.{$arms}.cells_per_arm");
 
@@ -182,7 +181,7 @@ it('genera tableros parametrizados de 3, 4 y 6 brazos con casas y pasillos', fun
             ->and($board['homes'][0]['cells'])->toHaveCount($arms === 4 ? 7 : 6)
             ->and($board['homes'][0]['goals'])->toHaveCount($arms === 4 ? 1 : 4)
             ->and(array_sum(array_map(fn (array $home): int => count($home['goals']), $board['homes'])))->toBe($arms === 4 ? 4 : $arms * 4)
-            ->and($board['safeCells'])->toHaveCount($arms === 4 ? 6 : 4)
+            ->and($board['safeCells'])->toHaveCount($arms === 4 ? 12 : 4)
             ->and($board['cells'][0]['next'])->toBe(1);
     }
 });

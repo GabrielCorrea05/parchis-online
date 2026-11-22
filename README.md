@@ -133,14 +133,14 @@ Estado de las comprobaciones en la última entrega:
 
 | Comprobación                              | Resultado                                                                                        |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `php artisan test --compact`              | 38/38 tests, 312 assertions                                                                      |
+| `php artisan test --compact`              | 46/46 tests, 385 assertions                                                                      |
 | `composer lint:check`                     | OK                                                                                               |
 | `npm run types:check`                     | OK                                                                                               |
 | `npm run build`                           | OK                                                                                               |
-| `npm run test:a11y`                       | 14/14 tests                                                                                      |
+| `npm run test:a11y`                       | 19/19 tests                                                                                      |
 | `php artisan schedule:list`               | limpieza horaria registrada                                                                      |
 | `php artisan optimize` / `optimize:clear` | OK                                                                                               |
-| `composer types:check`                    | 31 errores heredados de tipado en archivos previos; ninguno en los archivos nuevos de despliegue |
+| `composer types:check`                    | OK, 0 errores                                                                                    |
 
 ---
 
@@ -423,6 +423,9 @@ ejecuta manualmente (o se omite: no afecta a las partidas terminadas).
 > El workflow compila los assets antes de publicar y `.wasmerignore` conserva
 > `vendor/` y `public/build/` porque Wasmer los necesita en runtime, y excluye
 > `public/hot` para que no apunte al Vite local.
+> El almacenamiento de Wasmer (R2) devolvió un `500` esporádico al subir el
+> paquete en un despliegue; el paso de publicación reintenta hasta 3 veces con
+> 15 s entre intentos. Los tests no se reintentan: si fallan, no se despliega.
 
 El repositorio incluye `wasmer.toml` y `app.yaml` preparados. Pasos:
 

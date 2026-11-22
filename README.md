@@ -131,16 +131,16 @@ El seeder es idempotente: si ya existe `DEMO`, no vuelve a crearla.
 
 Estado de las comprobaciones en la última entrega:
 
-| Comprobación                              | Resultado                                                                                        |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `php artisan test --compact`              | 46/46 tests, 385 assertions                                                                      |
-| `composer lint:check`                     | OK                                                                                               |
-| `npm run types:check`                     | OK                                                                                               |
-| `npm run build`                           | OK                                                                                               |
-| `npm run test:a11y`                       | 19/19 tests                                                                                      |
-| `php artisan schedule:list`               | limpieza horaria registrada                                                                      |
-| `php artisan optimize` / `optimize:clear` | OK                                                                                               |
-| `composer types:check`                    | OK, 0 errores                                                                                    |
+| Comprobación                              | Resultado                   |
+| ----------------------------------------- | --------------------------- |
+| `php artisan test --compact`              | 46/46 tests, 385 assertions |
+| `composer lint:check`                     | OK                          |
+| `npm run types:check`                     | OK                          |
+| `npm run build`                           | OK                          |
+| `npm run test:a11y`                       | 19/19 tests                 |
+| `php artisan schedule:list`               | limpieza horaria registrada |
+| `php artisan optimize` / `optimize:clear` | OK                          |
+| `composer types:check`                    | OK, 0 errores               |
 
 ---
 

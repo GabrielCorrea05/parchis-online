@@ -42,6 +42,14 @@ vi.mock('@laravel/echo-vue', async () => {
 
     return {
         configureEcho: vi.fn(),
+        echoIsConfigured: vi.fn(() => false),
+        echo: vi.fn(() => ({
+            options: { auth: { headers: {} } },
+            connector: {
+                options: { auth: { headers: {} } },
+                pusher: { config: { auth: { headers: {} } } },
+            },
+        })),
         useConnectionStatus: () => ref('connected'),
         useEcho: vi.fn(),
         useEchoPresence: () => ({ leaveChannel: vi.fn() }),

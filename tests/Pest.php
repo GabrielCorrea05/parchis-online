@@ -16,10 +16,13 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
+    ->beforeEach(fn () => $this->withoutVite())
     ->in('Feature');
 
 // El motor usa config('parchis.*') para construir el tablero en los tests unitarios.
-pest()->extend(TestCase::class)->in('Unit');
+pest()->extend(TestCase::class)
+    ->beforeEach(fn () => $this->withoutVite())
+    ->in('Unit');
 
 /*
 |--------------------------------------------------------------------------

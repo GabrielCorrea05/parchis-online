@@ -1,6 +1,12 @@
 import { beforeEach, vi } from 'vitest';
 import { defineComponent, h, reactive } from 'vue';
 
+const page = reactive({
+    props: {
+        errors: {} as Record<string, string>,
+    },
+});
+
 vi.mock('@inertiajs/vue3', () => ({
     Head: defineComponent({
         setup: () => () => null,
@@ -24,7 +30,12 @@ vi.mock('@inertiajs/vue3', () => ({
             processing: false,
             post: vi.fn(),
         }),
+    usePage: () => page,
 }));
+
+export function setPageErrors(errors: Record<string, string>): void {
+    page.props.errors = { ...errors };
+}
 
 vi.mock('@laravel/echo-vue', async () => {
     const { ref } = await import('vue');
@@ -72,6 +83,7 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 beforeEach(() => {
+    page.props.errors = {};
     window.localStorage.clear();
     document.body.innerHTML = '';
     document.documentElement.lang = 'es';

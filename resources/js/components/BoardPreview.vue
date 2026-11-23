@@ -26,7 +26,7 @@ const safeCells = computed(() => new Set<number>(props.board.safeCells ?? []));
 <template>
     <svg
         :viewBox="board.viewBox"
-        class="mx-auto h-auto w-full max-w-[420px]"
+        class="mx-auto block h-auto w-full max-w-[420px]"
         role="img"
         :aria-label="`Previsualización del tablero con ${board.arms} brazos`"
     >

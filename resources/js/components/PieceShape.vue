@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { boardPlayerColor, playerShape } from '@/lib/playerStyle';
+import { boardPlayerColor } from '@/lib/playerStyle';
 
 const props = withDefaults(
     defineProps<{
@@ -27,22 +27,38 @@ const emit = defineEmits<{
     select: [];
 }>();
 
-const shape = computed(() => playerShape(props.color));
 const fill = computed(() => boardPlayerColor(props.color));
 
-const polygonPoints = computed(() => {
-    const r = props.r;
-    switch (shape.value) {
-        case 'triangle':
-            return `${props.cx},${props.cy - r} ${props.cx + r * 0.92},${props.cy + r * 0.78} ${props.cx - r * 0.92},${props.cy + r * 0.78}`;
-        case 'diamond':
-            return `${props.cx},${props.cy - r} ${props.cx + r},${props.cy} ${props.cx},${props.cy + r} ${props.cx - r},${props.cy}`;
-        default:
-            return '';
-    }
+/** Silueta de peón/figurita de parchís, escalada al radio de la casilla. */
+const pawnPath = computed(() => {
+    const x = props.cx;
+    const y = props.cy;
+    const s = props.r;
+    const headR = s * 0.34;
+    const headY = y - s * 0.5;
+    const neckY = y - s * 0.16;
+    const neckW = s * 0.2;
+    const shoulderY = y + s * 0.08;
+    const shoulderW = s * 0.46;
+    const baseY = y + s * 0.8;
+    const baseW = s * 0.74;
+
+    return [
+        `M ${x - neckW} ${neckY}`,
+        `C ${x - neckW} ${headY + headR * 0.95}, ${x - headR} ${headY + headR * 0.95}, ${x - headR} ${headY}`,
+        `A ${headR} ${headR} 0 1 1 ${x + headR} ${headY}`,
+        `C ${x + headR} ${headY + headR * 0.95}, ${x + neckW} ${headY + headR * 0.95}, ${x + neckW} ${neckY}`,
+        `Q ${x + shoulderW} ${shoulderY}, ${x + baseW * 0.68} ${baseY - s * 0.14}`,
+        `Q ${x + baseW} ${baseY - s * 0.02}, ${x + baseW * 0.8} ${baseY}`,
+        `L ${x - baseW * 0.8} ${baseY}`,
+        `Q ${x - baseW} ${baseY - s * 0.02}, ${x - baseW * 0.68} ${baseY - s * 0.14}`,
+        `Q ${x - shoulderW} ${shoulderY}, ${x - neckW} ${neckY}`,
+        'Z',
+    ].join(' ');
 });
 
-const fontSize = computed(() => Math.max(8, props.r * 0.9));
+const fontSize = computed(() => Math.max(7, props.r * 0.58));
+const numberY = computed(() => props.cy + props.r * 0.46);
 </script>
 
 <template>
@@ -79,44 +95,31 @@ const fontSize = computed(() => Math.max(8, props.r * 0.9));
             stroke="var(--c-focus)"
             stroke-width="3"
         />
-        <circle
-            :cx="cx"
-            :cy="cy + 1.5"
-            :r="r"
+        <path
+            :d="pawnPath"
+            :transform="`translate(0, ${r * 0.06})`"
             fill="var(--piece-shadow)"
-            opacity="0.5"
+            opacity="0.35"
         />
-        <circle
-            v-if="shape === 'circle'"
-            :cx="cx"
-            :cy="cy"
-            :r="r"
+        <path
+            :d="pawnPath"
             :fill="fill"
             stroke="var(--board-on-player)"
-            stroke-width="2"
-        />
-        <rect
-            v-else-if="shape === 'square'"
-            :x="cx - r * 0.86"
-            :y="cy - r * 0.86"
-            :width="r * 1.72"
-            :height="r * 1.72"
-            rx="2"
-            :fill="fill"
-            stroke="var(--board-on-player)"
-            stroke-width="2"
-        />
-        <polygon
-            v-else
-            :points="polygonPoints"
-            :fill="fill"
-            stroke="var(--board-on-player)"
-            stroke-width="2"
+            stroke-width="1.8"
             stroke-linejoin="round"
         />
+        <circle
+            :cx="cx - r * 0.1"
+            :cy="cy - r * 0.58"
+            :r="r * 0.12"
+            fill="var(--board-on-player)"
+            opacity="0.22"
+            pointer-events="none"
+        />
         <text
+            v-if="number !== undefined"
             :x="cx"
-            :y="cy + fontSize * 0.35"
+            :y="numberY"
             text-anchor="middle"
             :font-size="fontSize"
             font-weight="800"

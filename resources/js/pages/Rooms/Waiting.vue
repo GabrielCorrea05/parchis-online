@@ -282,7 +282,7 @@ const copyCode = async () => {
                     </div>
                 </section>
 
-                <section class="surface-card p-5">
+                <section class="surface-card min-w-0 overflow-hidden p-5">
                     <div class="mb-3 flex items-baseline justify-between gap-3">
                         <h2 class="text-lg font-bold text-[var(--c-ink)]">
                             Previsualización
@@ -294,7 +294,9 @@ const copyCode = async () => {
                             · {{ room.board.arms }} brazos
                         </span>
                     </div>
-                    <BoardPreview :board="room.board" />
+                    <div class="overflow-hidden rounded-[var(--radius-md)]">
+                        <BoardPreview :board="room.board" />
+                    </div>
                     <p class="hint mt-3 text-center">
                         Siempre es el mismo tablero clásico de 19×19: los brazos
                         sin jugador se dibujan igual, con sus 3 casillas seguras

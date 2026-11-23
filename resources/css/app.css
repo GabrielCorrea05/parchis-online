@@ -375,6 +375,7 @@
         border: 1px solid var(--c-line);
         border-radius: var(--radius-lg);
         background: var(--board-bg);
+        padding: var(--sp-2);
     }
 
     /* En móvil el tablero mantiene un ancho legible y se desplaza en horizontal. */
@@ -382,6 +383,7 @@
         display: block;
         width: 100%;
         min-width: 640px;
+        max-width: 100%;
         height: auto;
         margin-inline: auto;
     }

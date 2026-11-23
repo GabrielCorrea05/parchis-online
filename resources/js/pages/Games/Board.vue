@@ -485,9 +485,9 @@ onBeforeUnmount(() => {
 <template>
     <AppShell wide :title="`Partida ${snapshot.code}`" eyebrow="Turno en curso">
         <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-            <div class="grid gap-4">
+            <div class="grid min-w-0 gap-4">
                 <section
-                    class="board-frame"
+                    class="board-frame min-w-0"
                     :class="{ 'capture-flash': captureFlash }"
                 >
                     <h2 class="sr-only">Tablero de la partida</h2>

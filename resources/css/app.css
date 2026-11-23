@@ -370,8 +370,11 @@
     }
 
     .board-frame {
+        max-width: 100%;
         overflow-x: auto;
         overflow-y: hidden;
+        overscroll-behavior-x: contain;
+        -webkit-overflow-scrolling: touch;
         border: 1px solid var(--c-line);
         border-radius: var(--radius-lg);
         background: var(--board-bg);
@@ -381,15 +384,16 @@
     /* En móvil el tablero mantiene un ancho legible y se desplaza en horizontal. */
     .board-svg {
         display: block;
-        width: 100%;
+        width: max(100%, 20rem);
         min-width: 640px;
-        max-width: 100%;
+        max-width: none;
         height: auto;
         margin-inline: auto;
     }
 
     @media (min-width: 768px) {
         .board-svg {
+            width: 100%;
             min-width: 0;
             max-width: min(100%, 78vh);
         }

@@ -403,6 +403,13 @@ async function doRoll(): Promise<void> {
     } catch (caught) {
         if (caught instanceof GameApiError && caught.status === 409) {
             await refresh();
+            error.value = '';
+            queueAnnouncement(
+                version.value,
+                'El tablero se había actualizado. Ya está sincronizado.',
+            );
+            flushAnnouncement();
+            return;
         }
         error.value =
             caught instanceof Error
@@ -431,6 +438,13 @@ async function doMove(pieceId: string): Promise<void> {
     } catch (caught) {
         if (caught instanceof GameApiError && caught.status === 409) {
             await refresh();
+            error.value = '';
+            queueAnnouncement(
+                version.value,
+                'El tablero se había actualizado. Ya está sincronizado.',
+            );
+            flushAnnouncement();
+            return;
         }
         error.value =
             caught instanceof Error

@@ -14,6 +14,7 @@ use App\Models\Game;
 use App\Support\PlayerSession;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 final class GameController extends Controller
 {
@@ -42,6 +43,16 @@ final class GameController extends Controller
 
             $outcome = $this->games->roll($game, $player, $version === null ? null : (int) $version);
             $this->dispatchBroadcasts($outcome['broadcasts']);
+
+            Log::info('game.roll', [
+                'game_id' => $game->id,
+                'game_code' => $game->code,
+                'player_id' => $player->id,
+                'version' => $version === null ? null : (int) $version,
+                'roll' => $outcome['snapshot']['state']['dice']['last'] ?? null,
+                'consecutive_sixes' => $outcome['snapshot']['state']['dice']['consecutiveSixes'] ?? null,
+                'pending_roll' => $outcome['snapshot']['pendingRoll'] ?? null,
+            ]);
 
             return $outcome['snapshot'];
         });

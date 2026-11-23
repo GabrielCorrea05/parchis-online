@@ -88,3 +88,19 @@ jobs:
 
           echo "No se pudo desplegar en Wasmer después de 3 intentos." >&2
           exit 1
+
+      - name: Verificar bundle desplegado
+        run: |
+          expected=$(node -e "const m=require('./public/build/manifest.json'); console.log(m['resources/js/app.ts'].file)")
+          echo "Bundle esperado: ${expected}"
+          for intento in 1 2 3 4 5; do
+            html=$(curl -fsS https://parchis-online.wasmer.app || true)
+            if echo "$html" | grep -q "$expected"; then
+              echo "Wasmer sirve el bundle esperado."
+              exit 0
+            fi
+            echo "Intento ${intento}/5: Wasmer aún no sirve ${expected}"
+            sleep 20
+          done
+          echo "Wasmer no sirve el bundle esperado tras el despliegue." >&2
+          exit 1

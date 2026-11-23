@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import { useConnectionStatus, useEchoPresence } from '@laravel/echo-vue';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import AppShell from '@/components/AppShell.vue';
@@ -34,6 +34,10 @@ configureGameEcho({
 const youId = ref<number | null>(props.room.currentPlayerId ?? null);
 const room = ref<Room>(personaliseRoom(props.room, youId.value));
 const notice = ref<string>('');
+const page = usePage();
+const startError = computed(
+    () => (page.props.errors as Record<string, string | undefined>).start ?? '',
+);
 const copied = ref(false);
 const starting = ref(false);
 const navigating = ref(false);
@@ -262,7 +266,17 @@ const copyCode = async () => {
                                       : 'Faltan jugadores para empezar'
                             }}
                         </button>
-                        <p v-else class="text-sm text-[var(--c-muted)]">
+                        <p
+                            v-if="startError"
+                            class="notice notice--error mt-2"
+                            role="alert"
+                        >
+                            {{ startError }}
+                        </p>
+                        <p
+                            v-else-if="!isHost"
+                            class="text-sm text-[var(--c-muted)]"
+                        >
                             Esperando a que {{ hostName }} inicie la partida
                         </p>
                     </div>

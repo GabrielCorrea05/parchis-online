@@ -40,6 +40,13 @@ class Game extends Model
     {
         return [
             'status' => GameStatus::class,
+            // En MySQL/PostgreSQL PDO puede devolver los IDs como cadenas.
+            // Sin estos casts las comparaciones estrictas de host/turno fallan
+            // en producción aunque pasen con SQLite en los tests.
+            'host_player_id' => 'integer',
+            'winner_player_id' => 'integer',
+            'arms' => 'integer',
+            'version' => 'integer',
             'board_config' => 'array',
             'state' => 'array',
             'started_at' => 'datetime',

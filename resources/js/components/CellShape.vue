@@ -31,7 +31,10 @@ const fill = computed(() => {
 });
 
 const stroke = computed(() => {
-    if (props.kind === 'salida' && props.color) {
+    if (props.color) {
+        // La salida y el resto de casillas del brazo llevan el color del
+        // dueño: así se distingue de un vistazo la base y el recorrido de
+        // cada jugador, incluso en los brazos ocupados por fichas de otros.
         return boardPlayerColor(props.color);
     }
     if (props.kind === 'meta' || props.kind === 'goal') {
@@ -39,6 +42,14 @@ const stroke = computed(() => {
     }
 
     return 'var(--board-line)';
+});
+
+const borderWidth = computed(() => {
+    if (props.color) {
+        return props.kind === 'salida' ? 2.5 : 1.8;
+    }
+
+    return 1.1;
 });
 
 const pattern = computed(() =>
@@ -83,7 +94,7 @@ const labelY = computed(() => props.y + props.size * 0.33);
             rx="3"
             :fill="fill"
             :stroke="stroke"
-            :stroke-width="kind === 'salida' ? 2.5 : 1.1"
+            :stroke-width="borderWidth"
         />
         <rect
             :x="x - size / 2 + 2"

@@ -20,6 +20,9 @@ class Player extends Model
     protected function casts(): array
     {
         return [
+            'id' => 'integer',
+            'game_id' => 'integer',
+            'seat' => 'integer',
             'is_host' => 'boolean',
             'is_connected' => 'boolean',
         ];
@@ -33,7 +36,7 @@ class Player extends Model
 
     public function isHostOf(Game $game): bool
     {
-        return $game->host_player_id === $this->id;
+        return (int) $game->host_player_id === (int) $this->id;
     }
 
     public function getAuthIdentifier(): mixed

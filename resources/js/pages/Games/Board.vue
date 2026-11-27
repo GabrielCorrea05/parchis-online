@@ -115,11 +115,17 @@ const lastRollEntry = computed(() => snapshot.value.state.dice.history.at(-1));
 const lastRollerName = computed(() =>
     lastRollEntry.value ? playerName(lastRollEntry.value.playerId) : '',
 );
-const diceValue = computed(() =>
-    rolling.value
-        ? null
-        : (snapshot.value.pendingRoll ?? snapshot.value.state.dice.last),
-);
+const diceValue = computed(() => {
+    if (rolling.value) {
+        return null;
+    }
+
+    return (
+        snapshot.value.pendingRoll ??
+        lastRollEntry.value?.value ??
+        snapshot.value.state.dice.last
+    );
+});
 const boardSummary = computed(
     () =>
         `Tablero de ${snapshot.value.board.arms} brazos. Turno de ${playerName(snapshot.value.currentPlayerId)}. ` +
@@ -489,6 +495,18 @@ watch(connection, (value, previous) => {
         void refresh();
     }
 });
+
+watch(
+    () => `${snapshot.value.status}:${snapshot.value.version}`,
+    () => {
+        if (snapshot.value.status === 'finished') {
+            return;
+        }
+
+        void refresh();
+    },
+    { flush: 'post' },
+);
 
 onMounted(() => window.addEventListener('keydown', onGlobalKeydown));
 

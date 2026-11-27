@@ -370,33 +370,22 @@
     }
 
     .board-frame {
+        width: 100%;
         max-width: 100%;
-        overflow-x: auto;
-        overflow-y: hidden;
-        overscroll-behavior-x: contain;
-        -webkit-overflow-scrolling: touch;
+        overflow: hidden;
         border: 1px solid var(--c-line);
         border-radius: var(--radius-lg);
         background: var(--board-bg);
         padding: var(--sp-2);
     }
 
-    /* En móvil el tablero mantiene un ancho legible y se desplaza en horizontal. */
     .board-svg {
         display: block;
-        width: max(100%, 20rem);
-        min-width: 640px;
-        max-width: none;
+        width: 100%;
+        max-width: min(100%, 78vh);
         height: auto;
         margin-inline: auto;
-    }
-
-    @media (min-width: 768px) {
-        .board-svg {
-            width: 100%;
-            min-width: 0;
-            max-width: min(100%, 78vh);
-        }
+        aspect-ratio: 1 / 1;
     }
 
     .game-piece {

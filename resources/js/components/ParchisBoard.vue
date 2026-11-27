@@ -146,13 +146,29 @@ function offsetFor(piece: GamePiece): { x: number; y: number } {
     if (piece.progress === null || piece.progress >= ringCells.value) {
         return { x: 0, y: 0 };
     }
+
     const index = cellIndex(piece);
     const list = occupied.value.get(index) ?? [piece];
-    const i = list.findIndex((item) => item.id === piece.id);
-    const offset = (i < 0 ? 0 : i) - (list.length - 1) / 2;
+    const i = Math.max(
+        0,
+        list.findIndex((item) => item.id === piece.id),
+    );
+
+    if (list.length <= 1) {
+        return { x: 0, y: 0 };
+    }
+
+    if (list.length === 2) {
+        const shift = cellSize.value * 0.16;
+        return { x: i === 0 ? -shift : shift, y: i === 0 ? -2 : 2 };
+    }
+
+    const angle = (i / list.length) * Math.PI * 2 - Math.PI / 2;
+    const radius = cellSize.value * 0.2;
+
     return {
-        x: offset * cellSize.value * 0.24,
-        y: offset * cellSize.value * 0.1,
+        x: Math.cos(angle) * radius,
+        y: Math.sin(angle) * radius,
     };
 }
 

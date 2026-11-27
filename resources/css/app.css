@@ -400,11 +400,13 @@
     }
 
     .game-piece {
-        transition: transform var(--dur-base) ease;
+        transform-box: fill-box;
+        transform-origin: center;
+        transition: filter var(--dur-base) ease;
     }
 
     .game-piece:hover {
-        transform: scale(1.04);
+        filter: drop-shadow(0 2px 4px var(--piece-shadow));
     }
 
     .piece-active {
@@ -683,8 +685,11 @@
     }
 
     .piece-legal {
-        animation: piece-pulse 1.4s ease-in-out infinite;
         cursor: pointer;
+    }
+
+    .piece-legal > path:nth-of-type(2) {
+        animation: piece-pulse 1.4s ease-in-out infinite;
     }
 
     .piece-legal:focus-visible {

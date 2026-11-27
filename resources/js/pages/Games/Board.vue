@@ -476,7 +476,7 @@ function onGlobalKeydown(event: KeyboardEvent): void {
     }
 }
 
-watch(connection, (value) => {
+watch(connection, (value, previous) => {
     queueAnnouncement(
         version.value,
         value === 'connected'
@@ -484,6 +484,10 @@ watch(connection, (value) => {
             : 'Conexión perdida; reconectando…',
     );
     flushAnnouncement();
+
+    if (value === 'connected' && previous !== 'connected') {
+        void refresh();
+    }
 });
 
 onMounted(() => window.addEventListener('keydown', onGlobalKeydown));

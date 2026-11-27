@@ -38,6 +38,26 @@ const asPort = (value: unknown, fallback: number): number => {
     return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
 
+const csrfToken = (): string | null => {
+    if (typeof document === 'undefined') {
+        return null;
+    }
+
+    return (
+        document
+            .querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+            ?.getAttribute('content') ?? null
+    );
+};
+
+const withDefaultAuthHeaders = (
+    headers: Record<string, string>,
+): Record<string, string> => {
+    const csrf = csrfToken();
+
+    return csrf ? { 'X-CSRF-TOKEN': csrf, ...headers } : { ...headers };
+};
+
 const serverConfig = (): BroadcastConfig =>
     typeof window === 'undefined' ? {} : (window.__PARCHIS_BROADCAST__ ?? {});
 
@@ -93,9 +113,10 @@ export function configureGameEcho(headers: Record<string, string> = {}): void {
         config.connection ??
         import.meta.env.VITE_BROADCAST_CONNECTION ??
         'reverb';
+    const authHeaders = withDefaultAuthHeaders(headers);
 
     if (echoIsConfigured()) {
-        applyAuthHeaders(headers);
+        applyAuthHeaders(authHeaders);
         return;
     }
 
@@ -112,9 +133,9 @@ export function configureGameEcho(headers: Record<string, string> = {}): void {
             port: asPort(pusher.port ?? import.meta.env.VITE_PUSHER_PORT, 443),
             scheme,
             forceTLS: scheme === 'https',
-            auth: { headers },
+            auth: { headers: authHeaders },
         });
-        applyAuthHeaders(headers);
+        applyAuthHeaders(authHeaders);
 
         return;
     }
@@ -129,7 +150,7 @@ export function configureGameEcho(headers: Record<string, string> = {}): void {
         host: reverb.host ?? import.meta.env.VITE_REVERB_HOST,
         port: asPort(reverb.port ?? import.meta.env.VITE_REVERB_PORT, 443),
         scheme,
-        auth: { headers },
+        auth: { headers: authHeaders },
     });
-    applyAuthHeaders(headers);
+    applyAuthHeaders(authHeaders);
 }
